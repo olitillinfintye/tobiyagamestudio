@@ -1,0 +1,131 @@
+import { motion } from "framer-motion";
+import { ChevronDown, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import heroBg from "@/assets/hero-bg.jpg";
+
+export default function Hero() {
+  const scrollToWorks = () => {
+    const element = document.getElementById("works");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img
+          src={heroBg}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background" />
+      </div>
+
+      {/* Grid Overlay */}
+      <div className="absolute inset-0 grid-overlay opacity-50" />
+
+      {/* Glow Effects */}
+      <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
+
+      {/* Content */}
+      <div className="relative z-10 container mx-auto px-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mb-6"
+        >
+          <span className="inline-block px-4 py-2 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20">
+            Ethiopia's Premier XR Studio
+          </span>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 max-w-5xl mx-auto leading-tight"
+        >
+          We Create{" "}
+          <span className="gradient-text">Interactive Worlds</span>{" "}
+          That Inspire
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
+        >
+          We create interactive worlds that inspire exploration, foster connection, and redefine the boundaries of play.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
+          <Button
+            size="lg"
+            onClick={scrollToWorks}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary px-8 py-6 text-lg font-semibold"
+          >
+            Explore Our Work
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="border-border/50 text-foreground hover:bg-card/50 px-8 py-6 text-lg"
+          >
+            <Play className="w-5 h-5 mr-2" />
+            Watch Showreel
+          </Button>
+        </motion.div>
+
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1 }}
+          className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto"
+        >
+          {[
+            { number: "15+", label: "Projects" },
+            { number: "6", label: "Team Members" },
+            { number: "3", label: "Awards" },
+            { number: "2+", label: "Years" },
+          ].map((stat, index) => (
+            <div key={index} className="text-center">
+              <div className="font-display text-3xl md:text-4xl font-bold gradient-text mb-1">
+                {stat.number}
+              </div>
+              <div className="text-sm text-muted-foreground">{stat.label}</div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+      >
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="flex flex-col items-center gap-2 text-muted-foreground cursor-pointer"
+          onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}
+        >
+          <span className="text-sm">Scroll to explore</span>
+          <ChevronDown className="w-5 h-5" />
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}

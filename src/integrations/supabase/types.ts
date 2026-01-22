@@ -14,16 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      awards: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          title: string
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          title: string
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          title?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          category: Database["public"]["Enums"]["project_category"]
+          cover_image_url: string | null
+          created_at: string
+          display_order: number | null
+          featured: boolean | null
+          full_description: string | null
+          gallery_images: string[] | null
+          id: string
+          project_link: string | null
+          short_description: string | null
+          slug: string
+          title: string
+          tools_used: string[] | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["project_category"]
+          cover_image_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          featured?: boolean | null
+          full_description?: string | null
+          gallery_images?: string[] | null
+          id?: string
+          project_link?: string | null
+          short_description?: string | null
+          slug: string
+          title: string
+          tools_used?: string[] | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["project_category"]
+          cover_image_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          featured?: boolean | null
+          full_description?: string | null
+          gallery_images?: string[] | null
+          id?: string
+          project_link?: string | null
+          short_description?: string | null
+          slug?: string
+          title?: string
+          tools_used?: string[] | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          bio: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          name: string
+          photo_url: string | null
+          role: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          name: string
+          photo_url?: string | null
+          role: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          name?: string
+          photo_url?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      project_category: "vr" | "ar" | "interactive" | "award"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +281,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      project_category: ["vr", "ar", "interactive", "award"],
+    },
   },
 } as const
