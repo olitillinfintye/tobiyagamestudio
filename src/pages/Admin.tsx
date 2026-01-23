@@ -32,6 +32,7 @@ export default function Admin() {
   const [showForm, setShowForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<{
@@ -89,9 +90,19 @@ export default function Admin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) toast.error(error.message);
-    else toast.success("Logged in!");
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: { emailRedirectTo: window.location.origin }
+      });
+      if (error) toast.error(error.message);
+      else toast.success("Account created! You can now log in.");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) toast.error(error.message);
+      else toast.success("Logged in!");
+    }
   };
 
   const handleLogout = async () => {
@@ -178,12 +189,18 @@ export default function Admin() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="glass-card p-8 w-full max-w-md">
           <Link to="/" className="inline-flex items-center gap-2 text-primary mb-6 hover:underline"><ArrowLeft className="w-4 h-4" /> Back to site</Link>
-          <h1 className="font-display text-2xl font-bold mb-6">Admin Login</h1>
+          <h1 className="font-display text-2xl font-bold mb-6">{isSignUp ? "Create Admin Account" : "Admin Login"}</h1>
           <form onSubmit={handleLogin} className="space-y-4">
             <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-background/50" />
             <Input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-background/50" />
-            <Button type="submit" className="w-full">Login</Button>
+            <Button type="submit" className="w-full">{isSignUp ? "Sign Up" : "Login"}</Button>
           </form>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary hover:underline">
+              {isSignUp ? "Login" : "Sign Up"}
+            </button>
+          </p>
         </div>
       </div>
     );
