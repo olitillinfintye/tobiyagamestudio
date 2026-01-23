@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, LogOut, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, ArrowLeft, Upload, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Project = {
@@ -34,7 +34,18 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    slug: string;
+    category: "vr" | "ar" | "interactive" | "award";
+    short_description: string;
+    full_description: string;
+    cover_image_url: string;
+    video_url: string;
+    tools_used: string;
+    project_link: string;
+    featured: boolean;
+  }>({
     title: "",
     slug: "",
     category: "vr",
@@ -46,6 +57,7 @@ export default function Admin() {
     project_link: "",
     featured: false,
   });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -113,9 +125,33 @@ export default function Admin() {
   };
 
   const resetForm = () => {
-    setFormData({ title: "", slug: "", category: "vr", short_description: "", full_description: "", cover_image_url: "", video_url: "", tools_used: "", project_link: "", featured: false });
+    setFormData({ title: "", slug: "", category: "vr" as const, short_description: "", full_description: "", cover_image_url: "", video_url: "", tools_used: "", project_link: "", featured: false });
     setEditingProject(null);
     setShowForm(false);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("project-images")
+      .upload(fileName, file);
+
+    if (uploadError) {
+      toast.error("Upload failed: " + uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("project-images").getPublicUrl(fileName);
+    setFormData({ ...formData, cover_image_url: data.publicUrl });
+    toast.success("Image uploaded!");
+    setUploading(false);
   };
 
   const startEdit = (project: Project) => {
@@ -123,7 +159,7 @@ export default function Admin() {
     setFormData({
       title: project.title,
       slug: project.slug,
-      category: project.category,
+      category: project.category as "vr" | "ar" | "interactive" | "award",
       short_description: project.short_description || "",
       full_description: project.full_description || "",
       cover_image_url: project.cover_image_url || "",
@@ -185,11 +221,22 @@ export default function Admin() {
             <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
               <Input placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required className="bg-background/50" />
               <Input placeholder="Slug" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} required className="bg-background/50" />
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+              <Select value={formData.category} onValueChange={(v: "vr" | "ar" | "interactive" | "award") => setFormData({ ...formData, category: v })}>
                 <SelectTrigger className="bg-background/50"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="vr">VR</SelectItem><SelectItem value="ar">AR</SelectItem><SelectItem value="interactive">Interactive</SelectItem><SelectItem value="award">Award</SelectItem></SelectContent>
               </Select>
-              <Input placeholder="Cover Image URL" value={formData.cover_image_url} onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })} className="bg-background/50" />
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input placeholder="Cover Image URL" value={formData.cover_image_url} onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })} className="bg-background/50 flex-1" />
+                  <label className="cursor-pointer">
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <Button type="button" variant="outline" disabled={uploading} asChild>
+                      <span>{uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}</span>
+                    </Button>
+                  </label>
+                </div>
+                {formData.cover_image_url && <img src={formData.cover_image_url} alt="Preview" className="w-20 h-20 object-cover rounded" />}
+              </div>
               <Input placeholder="Video URL" value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} className="bg-background/50" />
               <Input placeholder="Project Link" value={formData.project_link} onChange={(e) => setFormData({ ...formData, project_link: e.target.value })} className="bg-background/50" />
               <Input placeholder="Tools (comma-separated)" value={formData.tools_used} onChange={(e) => setFormData({ ...formData, tools_used: e.target.value })} className="bg-background/50 md:col-span-2" />
