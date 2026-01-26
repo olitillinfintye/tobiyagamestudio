@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import tobiyaLogo from "@/assets/tobiya-logo-white.png";
 
 const navLinks = [
@@ -17,7 +16,6 @@ const navLinks = [
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,11 +75,6 @@ export default function Navbar() {
                 {link.name}
               </a>
             ))}
-            <Link to="/admin">
-              <Button variant="outline" size="sm" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
-                Admin
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -120,11 +113,6 @@ export default function Navbar() {
                   {link.name}
                 </a>
               ))}
-              <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full border-primary/50 text-primary">
-                  Admin
-                </Button>
-              </Link>
             </div>
           </motion.div>
         )}
