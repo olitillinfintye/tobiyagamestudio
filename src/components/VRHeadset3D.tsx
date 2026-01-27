@@ -1,11 +1,12 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, useGLTF } from "@react-three/drei";
-import { useRef, Suspense } from "react";
+import { useRef, Suspense, useEffect, useState } from "react";
 import * as THREE from "three";
+import { supabase } from "@/integrations/supabase/client";
 
-function VRHeadsetModel() {
+function VRHeadsetModel({ modelUrl }: { modelUrl: string }) {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF("/models/vr_headset.glb");
+  const { scene } = useGLTF(modelUrl);
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -53,10 +54,28 @@ function Particles() {
   );
 }
 
-// Preload the model
+// Preload the default model
 useGLTF.preload("/models/vr_headset.glb");
 
 export default function VRHeadset3D() {
+  const [modelUrl, setModelUrl] = useState("/models/vr_headset.glb");
+
+  useEffect(() => {
+    const fetchModelUrl = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "hero_3d_model")
+        .maybeSingle();
+
+      if (data?.value) {
+        setModelUrl(data.value);
+      }
+    };
+
+    fetchModelUrl();
+  }, []);
+
   return (
     <div className="absolute inset-0 z-0 opacity-60">
       <Canvas camera={{ position: [0, 0, 6], fov: 50 }}>
@@ -71,7 +90,7 @@ export default function VRHeadset3D() {
             intensity={1}
             color="#00d4ff"
           />
-          <VRHeadsetModel />
+          <VRHeadsetModel modelUrl={modelUrl} />
           <Particles />
         </Suspense>
       </Canvas>

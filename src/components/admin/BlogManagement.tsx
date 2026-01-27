@@ -37,6 +37,7 @@ export default function BlogManagement() {
     cover_image_url: "",
     author_name: "Tobiya Studio",
     published: false,
+    published_at: "",
   });
   const queryClient = useQueryClient();
 
@@ -55,9 +56,12 @@ export default function BlogManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const { published_at, ...rest } = data;
       const insertData = {
-        ...data,
-        published_at: data.published ? new Date().toISOString() : null,
+        ...rest,
+        published_at: data.published 
+          ? (published_at ? new Date(published_at).toISOString() : new Date().toISOString())
+          : null,
       };
       const { error } = await supabase.from("blog_posts").insert(insertData);
       if (error) throw error;
@@ -72,11 +76,12 @@ export default function BlogManagement() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { published_at, ...rest } = data;
       const updateData = {
-        ...data,
-        published_at: data.published && !editingPost?.published_at 
-          ? new Date().toISOString() 
-          : data.published ? editingPost?.published_at : null,
+        ...rest,
+        published_at: data.published 
+          ? (published_at ? new Date(published_at).toISOString() : new Date().toISOString())
+          : null,
       };
       const { error } = await supabase
         .from("blog_posts")
@@ -132,6 +137,7 @@ export default function BlogManagement() {
       cover_image_url: "",
       author_name: "Tobiya Studio",
       published: false,
+      published_at: "",
     });
     setEditingPost(null);
     setIsDialogOpen(false);
@@ -147,6 +153,7 @@ export default function BlogManagement() {
       cover_image_url: post.cover_image_url || "",
       author_name: post.author_name,
       published: post.published,
+      published_at: post.published_at ? post.published_at.split("T")[0] : "",
     });
     setIsDialogOpen(true);
   };
@@ -269,6 +276,18 @@ export default function BlogManagement() {
                   value={formData.cover_image_url}
                   onChange={(url) =>
                     setFormData({ ...formData, cover_image_url: url })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="published_at">Publish Date</Label>
+                <Input
+                  id="published_at"
+                  type="date"
+                  value={formData.published_at}
+                  onChange={(e) =>
+                    setFormData({ ...formData, published_at: e.target.value })
                   }
                 />
               </div>

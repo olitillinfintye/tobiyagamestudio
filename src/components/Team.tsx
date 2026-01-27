@@ -9,6 +9,8 @@ interface TeamMember {
   role: string;
   bio: string | null;
   photo_url: string | null;
+  linkedin_url: string | null;
+  twitter_url: string | null;
 }
 
 const defaultTeam: TeamMember[] = [
@@ -18,6 +20,8 @@ const defaultTeam: TeamMember[] = [
     role: "CEO & XR Developer",
     bio: "Visionary leader driving innovation in XR technology in Ethiopia.",
     photo_url: null,
+    linkedin_url: null,
+    twitter_url: null,
   },
   {
     id: "2",
@@ -25,6 +29,8 @@ const defaultTeam: TeamMember[] = [
     role: "Architect & AR Developer",
     bio: "Combining architectural expertise with cutting-edge AR development.",
     photo_url: null,
+    linkedin_url: null,
+    twitter_url: null,
   },
   {
     id: "3",
@@ -32,6 +38,8 @@ const defaultTeam: TeamMember[] = [
     role: "Audio Engineer",
     bio: "Creating immersive soundscapes that elevate virtual experiences.",
     photo_url: null,
+    linkedin_url: null,
+    twitter_url: null,
   },
   {
     id: "4",
@@ -39,6 +47,8 @@ const defaultTeam: TeamMember[] = [
     role: "Mechanical & UI/UX Designer",
     bio: "Blending mechanical engineering with intuitive user experience design.",
     photo_url: null,
+    linkedin_url: null,
+    twitter_url: null,
   },
   {
     id: "5",
@@ -46,6 +56,8 @@ const defaultTeam: TeamMember[] = [
     role: "Architect & 3D Designer",
     bio: "Crafting stunning 3D environments and architectural visualizations.",
     photo_url: null,
+    linkedin_url: null,
+    twitter_url: null,
   },
   {
     id: "6",
@@ -53,6 +65,8 @@ const defaultTeam: TeamMember[] = [
     role: "Software Eng & Web Developer",
     bio: "Building robust software solutions and web platforms.",
     photo_url: null,
+    linkedin_url: null,
+    twitter_url: null,
   },
 ];
 
@@ -133,20 +147,30 @@ export default function Team() {
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 {/* Social Links - Show on hover - Hidden on mobile */}
-                <div className="hidden sm:flex absolute bottom-4 left-0 right-0 justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-                  <a
-                    href="#"
-                    className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    <Linkedin className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="#"
-                    className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    <Twitter className="w-5 h-5" />
-                  </a>
-                </div>
+                {(member.linkedin_url || member.twitter_url) && (
+                  <div className="hidden sm:flex absolute bottom-4 left-0 right-0 justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+                    {member.linkedin_url && (
+                      <a
+                        href={member.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                      >
+                        <Linkedin className="w-5 h-5" />
+                      </a>
+                    )}
+                    {member.twitter_url && (
+                      <a
+                        href={member.twitter_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                      >
+                        <Twitter className="w-5 h-5" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Info */}

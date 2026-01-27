@@ -245,27 +245,33 @@ export type Database = {
           created_at: string
           display_order: number | null
           id: string
+          linkedin_url: string | null
           name: string
           photo_url: string | null
           role: string
+          twitter_url: string | null
         }
         Insert: {
           bio?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
+          linkedin_url?: string | null
           name: string
           photo_url?: string | null
           role: string
+          twitter_url?: string | null
         }
         Update: {
           bio?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
+          linkedin_url?: string | null
           name?: string
           photo_url?: string | null
           role?: string
+          twitter_url?: string | null
         }
         Relationships: []
       }
