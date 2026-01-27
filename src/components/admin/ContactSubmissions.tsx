@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +75,28 @@ export default function ContactSubmissions() {
       markAsReadMutation.mutate(submission.id);
     }
   };
+
+  // Real-time subscription for new submissions
+  useEffect(() => {
+    const channel = supabase
+      .channel('contact-submissions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'contact_submissions',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['contact-submissions'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const unreadCount = submissions?.filter(s => !s.read).length || 0;
 
