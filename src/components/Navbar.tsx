@@ -54,7 +54,7 @@ export default function Navbar() {
             <img
               src={tobiyaLogo}
               alt="Tobiya Studio"
-              className="h-10 w-auto"
+              className="h-14 w-auto transition-transform duration-300 hover:scale-110"
             />
           </Link>
 
