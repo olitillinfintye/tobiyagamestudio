@@ -14,6 +14,8 @@ type TeamMember = {
   bio: string | null;
   photo_url: string | null;
   display_order: number | null;
+  linkedin_url: string | null;
+  twitter_url: string | null;
 };
 
 export function TeamManagement() {
@@ -26,6 +28,8 @@ export function TeamManagement() {
     bio: "",
     photo_url: "",
     display_order: 0,
+    linkedin_url: "",
+    twitter_url: "",
   });
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export function TeamManagement() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", role: "", bio: "", photo_url: "", display_order: 0 });
+    setFormData({ name: "", role: "", bio: "", photo_url: "", display_order: 0, linkedin_url: "", twitter_url: "" });
     setEditingMember(null);
     setShowForm(false);
   };
@@ -72,6 +76,8 @@ export function TeamManagement() {
       bio: member.bio || "",
       photo_url: member.photo_url || "",
       display_order: member.display_order || 0,
+      linkedin_url: member.linkedin_url || "",
+      twitter_url: member.twitter_url || "",
     });
     setShowForm(true);
   };
@@ -122,6 +128,18 @@ export function TeamManagement() {
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               className="bg-background/50 md:col-span-2"
               rows={3}
+            />
+            <Input
+              placeholder="LinkedIn URL"
+              value={formData.linkedin_url}
+              onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
+              className="bg-background/50"
+            />
+            <Input
+              placeholder="Twitter/X URL"
+              value={formData.twitter_url}
+              onChange={(e) => setFormData({ ...formData, twitter_url: e.target.value })}
+              className="bg-background/50"
             />
             <div className="md:col-span-2 flex gap-2">
               <Button type="submit">{editingMember ? "Update" : "Create"}</Button>
