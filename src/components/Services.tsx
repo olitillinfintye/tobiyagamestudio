@@ -58,27 +58,27 @@ export default function Services() {
         </motion.div>
 
         {/* Services Grid */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-8">
           {services.map((service, index) => (
             <motion.div
               key={service.title}
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.15 * index }}
-              className="glass-card p-8 group hover:border-primary/50 transition-all duration-500 project-card"
+              className="glass-card p-4 md:p-8 group hover:border-primary/50 transition-all duration-500 project-card"
             >
-              <div className="flex items-start gap-6">
-                <div className="service-icon shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <service.icon className="w-8 h-8 text-primary-foreground" />
+              <div className="flex items-start gap-4 md:gap-6">
+                <div className="service-icon shrink-0 group-hover:scale-110 transition-transform duration-300 w-12 h-12 md:w-14 md:h-14 flex items-center justify-center">
+                  <service.icon className="w-6 h-6 md:w-8 md:h-8 text-primary-foreground" />
                 </div>
-                <div>
-                  <h3 className="font-display text-xl font-bold mb-3">{service.title}</h3>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">{service.description}</p>
+                <div className="min-w-0">
+                  <h3 className="font-display text-lg md:text-xl font-bold mb-2 md:mb-3">{service.title}</h3>
+                  <p className="text-sm md:text-base text-muted-foreground mb-3 md:mb-4 leading-relaxed">{service.description}</p>
                   <div className="flex flex-wrap gap-2">
                     {service.features.map((feature) => (
                       <span
                         key={feature}
-                        className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                        className="px-2 md:px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
                       >
                         {feature}
                       </span>

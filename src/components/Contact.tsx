@@ -61,6 +61,18 @@ export default function Contact() {
       
       if (error) throw error;
       
+      // Send email notification (non-blocking)
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-notification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+        }),
+      }).catch(console.error);
+      
       toast.success("Message sent successfully! We'll get back to you soon.");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
@@ -96,17 +108,17 @@ export default function Contact() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
           {/* Contact Info */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-8"
+            className="space-y-6 md:space-y-8"
           >
             <div>
-              <h3 className="font-display text-2xl font-bold mb-4">Contact Information</h3>
-              <p className="text-muted-foreground mb-8">
+              <h3 className="font-display text-xl md:text-2xl font-bold mb-3 md:mb-4">Contact Information</h3>
+              <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8">
                 We're here to help and answer any questions you might have. We look forward to hearing from you.
               </p>
             </div>

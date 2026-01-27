@@ -106,7 +106,7 @@ export default function Team() {
         </motion.div>
 
         {/* Team Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {team.map((member, index) => (
             <motion.div
               key={member.id}
@@ -116,7 +116,7 @@ export default function Team() {
               className="glass-card overflow-hidden group team-card"
             >
               {/* Photo */}
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-40 sm:h-64 overflow-hidden">
                 {member.photo_url ? (
                   <img
                     src={member.photo_url}
@@ -125,15 +125,15 @@ export default function Team() {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary/20 via-secondary to-accent/10 flex items-center justify-center">
-                    <span className="text-5xl font-display text-primary/50">
+                    <span className="text-3xl sm:text-5xl font-display text-primary/50">
                       {member.name.split(" ").map((n) => n[0]).join("")}
                     </span>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                {/* Social Links - Show on hover */}
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+                {/* Social Links - Show on hover - Hidden on mobile */}
+                <div className="hidden sm:flex absolute bottom-4 left-0 right-0 justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
                   <a
                     href="#"
                     className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
@@ -150,13 +150,13 @@ export default function Team() {
               </div>
 
               {/* Info */}
-              <div className="p-6 text-center">
-                <h3 className="font-display text-xl font-bold mb-1 group-hover:text-primary transition-colors">
+              <div className="p-4 sm:p-6 text-center">
+                <h3 className="font-display text-base sm:text-xl font-bold mb-1 group-hover:text-primary transition-colors truncate">
                   {member.name}
                 </h3>
-                <p className="text-sm text-primary mb-3">{member.role}</p>
+                <p className="text-xs sm:text-sm text-primary mb-2 sm:mb-3 truncate">{member.role}</p>
                 {member.bio && (
-                  <p className="text-sm text-muted-foreground">{member.bio}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{member.bio}</p>
                 )}
               </div>
             </motion.div>
