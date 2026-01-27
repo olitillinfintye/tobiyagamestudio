@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ChevronDown, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
+import VRHeadset3D from "./VRHeadset3D";
 
 export default function Hero() {
   const scrollToWorks = () => {
@@ -28,6 +29,10 @@ export default function Hero() {
 
       {/* Glow Effects */}
       <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
+
+      {/* 3D VR Headset */}
+      <VRHeadset3D />
       <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
 
       {/* Content */}
