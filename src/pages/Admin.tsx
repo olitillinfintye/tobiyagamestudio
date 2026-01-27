@@ -142,31 +142,31 @@ export default function Admin() {
           </Button>
         </div>
 
-        <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Analytics</span>
+        <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
+            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Analytics</span>
             </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              <span className="hidden sm:inline">Messages</span>
+            <TabsTrigger value="messages" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Messages</span>
             </TabsTrigger>
-            <TabsTrigger value="projects" className="flex items-center gap-2">
-              <Layers className="w-4 h-4" />
-              <span className="hidden sm:inline">Projects</span>
+            <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Projects</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Team</span>
+            <TabsTrigger value="team" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Team</span>
             </TabsTrigger>
-            <TabsTrigger value="awards" className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Awards</span>
+            <TabsTrigger value="awards" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Awards</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
+            <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
