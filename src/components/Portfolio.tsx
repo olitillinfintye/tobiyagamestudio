@@ -191,13 +191,13 @@ export default function Portfolio() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-3 mb-12"
+          className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12 px-2"
         >
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              className={`px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-300 ${
                 activeCategory === category.id
                   ? "bg-primary text-primary-foreground glow-primary"
                   : "bg-card border border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
@@ -209,7 +209,7 @@ export default function Portfolio() {
         </motion.div>
 
         {/* Projects Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
           {filteredProjects.map((project, index) => (
             <motion.div
               key={project.id}
@@ -219,7 +219,7 @@ export default function Portfolio() {
               className="glass-card overflow-hidden group project-card"
             >
               {/* Image */}
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-32 sm:h-48 overflow-hidden">
                 {project.cover_image_url ? (
                   <img
                     src={project.cover_image_url}
@@ -251,17 +251,17 @@ export default function Portfolio() {
               </div>
 
               {/* Content */}
-              <div className="p-6">
-                <h3 className="font-display text-lg font-bold mb-2 group-hover:text-primary transition-colors">
+              <div className="p-3 md:p-6">
+                <h3 className="font-display text-sm md:text-lg font-bold mb-1 md:mb-2 group-hover:text-primary transition-colors line-clamp-1">
                   {project.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-4 line-clamp-2">
                   {project.short_description}
                 </p>
 
-                {/* Tools */}
+                {/* Tools - Hidden on mobile */}
                 {project.tools_used && project.tools_used.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="hidden md:flex flex-wrap gap-2 mb-4">
                     {project.tools_used.slice(0, 3).map((tool) => (
                       <span
                         key={tool}
@@ -281,9 +281,9 @@ export default function Portfolio() {
                     setSelectedProject(project);
                     setDialogOpen(true);
                   }}
-                  className="w-full mt-2"
+                  className="w-full mt-1 md:mt-2 text-xs md:text-sm py-1 md:py-2"
                 >
-                  <Eye className="w-4 h-4 mr-2" />
+                  <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   View More
                 </Button>
               </div>

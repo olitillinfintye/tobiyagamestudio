@@ -111,27 +111,27 @@ export default function Awards() {
                 initial={{ opacity: 0, x: index % 2 === 0 ? -40 : 40 }}
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.6, delay: 0.15 * index }}
-                className="relative flex items-start gap-6 mb-8 last:mb-0"
+                className="relative flex items-start gap-3 md:gap-6 mb-6 md:mb-8 last:mb-0"
               >
                 {/* Icon */}
-                <div className="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/30 flex items-center justify-center">
-                  <Icon className="w-8 h-8 text-accent" />
+                <div className="shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/30 flex items-center justify-center">
+                  <Icon className="w-6 h-6 md:w-8 md:h-8 text-accent" />
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 glass-card p-6 relative overflow-hidden group hover:border-accent/50 transition-colors">
+                <div className="flex-1 glass-card p-4 md:p-6 relative overflow-hidden group hover:border-accent/50 transition-colors">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full blur-2xl group-hover:bg-accent/10 transition-colors" />
                   <div className="relative">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-display text-xl font-bold">{award.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                      <h3 className="font-display text-base md:text-xl font-bold">{award.title}</h3>
                       {award.year && (
-                        <span className="award-badge">
+                        <span className="award-badge text-xs">
                           <Star className="w-3 h-3" />
                           {award.year}
                         </span>
                       )}
                     </div>
-                    <p className="text-muted-foreground">{award.description}</p>
+                    <p className="text-sm md:text-base text-muted-foreground">{award.description}</p>
                   </div>
                 </div>
               </motion.div>

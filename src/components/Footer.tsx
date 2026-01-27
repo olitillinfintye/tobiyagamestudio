@@ -33,20 +33,20 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-card border-t border-border/50 pt-16 pb-8">
+    <footer className="bg-card border-t border-border/50 pt-12 md:pt-16 pb-8">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12 mb-8 md:mb-12">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2 lg:col-span-2">
             <Link to="/" className="inline-block mb-4">
-              <img src={tobiyaLogo} alt="Tobiya Studio" className="h-10 w-auto" />
+              <img src={tobiyaLogo} alt="Tobiya Studio" className="h-8 md:h-10 w-auto" />
             </Link>
-            <p className="text-muted-foreground mb-6 max-w-sm">
+            <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6 max-w-sm">
               We create interactive worlds that inspire exploration, foster connection, and redefine the boundaries of play.
             </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
               <span>Built with</span>
-              <Heart className="w-4 h-4 text-destructive fill-destructive" />
+              <Heart className="w-3 h-3 md:w-4 md:h-4 text-destructive fill-destructive" />
               <span>in Ethiopia</span>
             </div>
           </div>

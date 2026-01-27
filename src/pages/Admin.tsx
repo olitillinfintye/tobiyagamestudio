@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail } from "lucide-react";
+import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
@@ -12,6 +12,7 @@ import { AwardsManagement } from "@/components/admin/AwardsManagement";
 import { SettingsManagement } from "@/components/admin/SettingsManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import ContactSubmissions from "@/components/admin/ContactSubmissions";
+import BlogManagement from "@/components/admin/BlogManagement";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -143,30 +144,34 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 h-auto p-1">
             <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Analytics</span>
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="messages" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
               <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Messages</span>
+              <span className="hidden sm:inline">Messages</span>
+            </TabsTrigger>
+            <TabsTrigger value="blog" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Blog</span>
             </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
               <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Projects</span>
+              <span className="hidden sm:inline">Projects</span>
             </TabsTrigger>
             <TabsTrigger value="team" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
               <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Team</span>
+              <span className="hidden sm:inline">Team</span>
             </TabsTrigger>
             <TabsTrigger value="awards" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
               <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Awards</span>
+              <span className="hidden sm:inline">Awards</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
               <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Settings</span>
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -176,6 +181,10 @@ export default function Admin() {
 
           <TabsContent value="messages">
             <ContactSubmissions />
+          </TabsContent>
+
+          <TabsContent value="blog">
+            <BlogManagement />
           </TabsContent>
 
           <TabsContent value="projects">
