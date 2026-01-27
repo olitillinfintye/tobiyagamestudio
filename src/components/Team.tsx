@@ -1,6 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
-import { Linkedin, Twitter } from "lucide-react";
+import { Linkedin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TeamMember {
@@ -147,28 +147,16 @@ export default function Team() {
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 {/* Social Links - Show on hover - Hidden on mobile */}
-                {(member.linkedin_url || member.twitter_url) && (
+                {member.linkedin_url && (
                   <div className="hidden sm:flex absolute bottom-4 left-0 right-0 justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-                    {member.linkedin_url && (
-                      <a
-                        href={member.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                      >
-                        <Linkedin className="w-5 h-5" />
-                      </a>
-                    )}
-                    {member.twitter_url && (
-                      <a
-                        href={member.twitter_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                      >
-                        <Twitter className="w-5 h-5" />
-                      </a>
-                    )}
+                    <a
+                      href={member.linkedin_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                    >
+                      <Linkedin className="w-5 h-5" />
+                    </a>
                   </div>
                 )}
               </div>

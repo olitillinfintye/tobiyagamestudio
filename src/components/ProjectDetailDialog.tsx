@@ -102,12 +102,30 @@ export default function ProjectDetailDialog({ project, open, onOpenChange }: Pro
               <div>
                 <h4 className="text-sm font-semibold mb-2">Video</h4>
                 <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                  <iframe
-                    src={project.video_url}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title={project.title}
-                  />
+                  {project.video_url.includes('youtube.com') || project.video_url.includes('youtu.be') ? (
+                    <iframe
+                      src={project.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      title={project.title}
+                    />
+                  ) : project.video_url.includes('vimeo.com') ? (
+                    <iframe
+                      src={project.video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      title={project.title}
+                    />
+                  ) : (
+                    <video
+                      src={project.video_url}
+                      className="w-full h-full"
+                      controls
+                      title={project.title}
+                    />
+                  )}
                 </div>
               </div>
             )}
