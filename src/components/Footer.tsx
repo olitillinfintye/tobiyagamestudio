@@ -39,7 +39,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
             <Link to="/" className="inline-block mb-4">
-              <img src={tobiyaLogo} alt="Tobiya Studio" className="h-8 md:h-10 w-auto" />
+              <img src={tobiyaLogo} alt="Tobiya Studio" className="h-16 md:h-20 w-auto" />
             </Link>
             <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6 max-w-sm">
               We create interactive worlds that inspire exploration, foster connection, and redefine the boundaries of play.
