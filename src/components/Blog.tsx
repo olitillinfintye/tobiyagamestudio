@@ -21,14 +21,18 @@ interface BlogPost {
   author_name: string;
   published_at: string | null;
   created_at: string;
+  category: string | null;
 }
 
 export default function Blog() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [allPosts, setAllPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     fetchPosts();
@@ -40,10 +44,10 @@ export default function Blog() {
         .from("blog_posts")
         .select("*")
         .eq("published", true)
-        .order("published_at", { ascending: false })
-        .limit(6);
+        .order("published_at", { ascending: false });
 
       if (error) throw error;
+      setAllPosts(data || []);
       setPosts(data || []);
     } catch (error) {
       console.error("Error fetching blog posts:", error);
@@ -51,6 +55,18 @@ export default function Blog() {
       setLoading(false);
     }
   };
+
+  // Get unique categories
+  const categories = ["all", ...new Set(allPosts.map(post => post.category || "General").filter(Boolean))];
+
+  // Filter posts by category
+  const filteredPosts = selectedCategory === "all" 
+    ? allPosts 
+    : allPosts.filter(post => (post.category || "General") === selectedCategory);
+
+  // Limit display to 3 unless showAll is true
+  const displayedPosts = showAll ? filteredPosts : filteredPosts.slice(0, 3);
+  const hasMore = filteredPosts.length > 3;
 
   if (loading) {
     return (
@@ -62,7 +78,7 @@ export default function Blog() {
     );
   }
 
-  if (posts.length === 0) {
+  if (allPosts.length === 0) {
     return null;
   }
 
@@ -77,7 +93,7 @@ export default function Blog() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <span className="inline-block px-4 py-2 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
             Blog
@@ -90,9 +106,34 @@ export default function Blog() {
           </p>
         </motion.div>
 
+        {/* Category Filter */}
+        {categories.length > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-2 mb-8"
+          >
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setSelectedCategory(category);
+                  setShowAll(false);
+                }}
+                className="capitalize"
+              >
+                {category}
+              </Button>
+            ))}
+          </motion.div>
+        )}
+
         {/* Blog Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post, index) => (
+          {displayedPosts.map((post, index) => (
             <motion.article
               key={post.id}
               initial={{ opacity: 0, y: 40 }}
@@ -117,6 +158,11 @@ export default function Blog() {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                {post.category && (
+                  <span className="absolute top-3 left-3 px-2 py-1 text-xs rounded-full bg-primary/80 text-primary-foreground">
+                    {post.category}
+                  </span>
+                )}
               </div>
 
               {/* Content */}
@@ -146,6 +192,42 @@ export default function Blog() {
             </motion.article>
           ))}
         </div>
+
+        {/* View More Button */}
+        {hasMore && !showAll && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-center mt-8"
+          >
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setShowAll(true)}
+              className="group"
+            >
+              View All Articles
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </motion.div>
+        )}
+
+        {showAll && hasMore && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center mt-8"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAll(false)}
+            >
+              Show Less
+            </Button>
+          </motion.div>
+        )}
       </div>
 
       {/* Blog Post Dialog */}
@@ -176,6 +258,11 @@ export default function Blog() {
                   <User className="w-4 h-4" />
                   {selectedPost.author_name}
                 </span>
+                {selectedPost.category && (
+                  <span className="px-2 py-1 text-xs rounded-full bg-primary/20 text-primary">
+                    {selectedPost.category}
+                  </span>
+                )}
               </div>
               
               <div className="prose prose-invert max-w-none text-sm sm:text-base">

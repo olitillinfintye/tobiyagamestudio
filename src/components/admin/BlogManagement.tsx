@@ -8,10 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { ImageUpload } from "./ImageUpload";
+
+const BLOG_CATEGORIES = [
+  "General",
+  "News",
+  "Tutorials",
+  "Case Studies",
+  "Industry Insights",
+  "Product Updates",
+];
 
 interface BlogPost {
   id: string;
@@ -24,6 +34,7 @@ interface BlogPost {
   published: boolean;
   published_at: string | null;
   created_at: string;
+  category: string | null;
 }
 
 export default function BlogManagement() {
@@ -38,6 +49,7 @@ export default function BlogManagement() {
     author_name: "Tobiya Studio",
     published: false,
     published_at: "",
+    category: "General",
   });
   const queryClient = useQueryClient();
 
@@ -138,6 +150,7 @@ export default function BlogManagement() {
       author_name: "Tobiya Studio",
       published: false,
       published_at: "",
+      category: "General",
     });
     setEditingPost(null);
     setIsDialogOpen(false);
@@ -154,6 +167,7 @@ export default function BlogManagement() {
       author_name: post.author_name,
       published: post.published,
       published_at: post.published_at ? post.published_at.split("T")[0] : "",
+      category: post.category || "General",
     });
     setIsDialogOpen(true);
   };
@@ -278,6 +292,27 @@ export default function BlogManagement() {
                     setFormData({ ...formData, cover_image_url: url })
                   }
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BLOG_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
