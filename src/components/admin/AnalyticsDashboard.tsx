@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Eye, Globe, TrendingUp } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import LiveVisitorCount from "./LiveVisitorCount";
 
 interface AnalyticsData {
   pageviews: number;
@@ -88,52 +89,55 @@ export default function AnalyticsDashboard() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* Live Visitor Count */}
+        <LiveVisitorCount />
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Pageviews</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Pageviews</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.pageviews?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
+            <div className="text-xl sm:text-2xl font-bold">{analytics?.pageviews?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Last 30 days</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Sessions</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.sessions?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">Unique visitors</p>
+            <div className="text-xl sm:text-2xl font-bold">{analytics?.sessions?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground hidden sm:block">Unique visitors</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bounce Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Bounce</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {analytics?.sessions ? Math.round((analytics.bounces / analytics.sessions) * 100) : 0}%
             </div>
-            <p className="text-xs text-muted-foreground">Single page visits</p>
+            <p className="text-xs text-muted-foreground hidden sm:block">Single page visits</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Time on Page</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Avg. Time</CardTitle>
+            <Globe className="h-4 w-4 text-muted-foreground hidden sm:block" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {analytics?.time_on_page_avg ? Math.round(analytics.time_on_page_avg) : 0}s
             </div>
-            <p className="text-xs text-muted-foreground">Average duration</p>
+            <p className="text-xs text-muted-foreground hidden sm:block">Duration</p>
           </CardContent>
         </Card>
       </div>

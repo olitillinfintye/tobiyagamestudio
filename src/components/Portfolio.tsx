@@ -1,8 +1,9 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
-import { ExternalLink, Play } from "lucide-react";
+import { ExternalLink, Play, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import ProjectDetailDialog from "./ProjectDetailDialog";
 
 interface Project {
   id: string;
@@ -10,7 +11,9 @@ interface Project {
   slug: string;
   category: string;
   short_description: string | null;
+  full_description?: string | null;
   cover_image_url: string | null;
+  gallery_images?: string[] | null;
   video_url: string | null;
   tools_used: string[] | null;
   project_link: string | null;
@@ -131,7 +134,8 @@ export default function Portfolio() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [projects, setProjects] = useState<Project[]>(defaultProjects);
   const [loading, setLoading] = useState(true);
-
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -269,22 +273,31 @@ export default function Portfolio() {
                   </div>
                 )}
 
-                {/* Link */}
-                {project.project_link && (
-                  <a
-                    href={project.project_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    View Project <ExternalLink className="w-4 h-4" />
-                  </a>
-                )}
+                {/* View More Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setDialogOpen(true);
+                  }}
+                  className="w-full mt-2"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View More
+                </Button>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Project Detail Dialog */}
+      <ProjectDetailDialog
+        project={selectedProject}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </section>
   );
 }
