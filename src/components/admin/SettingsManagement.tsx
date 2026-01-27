@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Save, RefreshCw, Upload, Box } from "lucide-react";
+import { Save, RefreshCw, Upload, Box, Eye } from "lucide-react";
+
+// Lazy load the 3D preview component
+const Model3DPreview = lazy(() => import("@/components/Model3DPreview"));
 
 interface HeroStat {
   key: string;
@@ -23,6 +26,7 @@ export function SettingsManagement() {
   const [saving, setSaving] = useState(false);
   const [modelUrl, setModelUrl] = useState("/models/vr_headset.glb");
   const [uploadingModel, setUploadingModel] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -115,7 +119,8 @@ export function SettingsManagement() {
       if (updateError) throw updateError;
 
       setModelUrl(newModelUrl);
-      toast.success("3D model uploaded successfully! Refresh the page to see changes.");
+      setShowPreview(true);
+      toast.success("3D model uploaded successfully! Preview updated.");
     } catch (error: any) {
       toast.error("Failed to upload model: " + error.message);
     }
@@ -193,6 +198,20 @@ export function SettingsManagement() {
             <p className="text-sm font-mono break-all">{modelUrl}</p>
           </div>
 
+          {/* 3D Model Preview */}
+          {showPreview && (
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Model Preview</Label>
+              <Suspense fallback={
+                <div className="h-64 flex items-center justify-center bg-muted/20 rounded-lg">
+                  <RefreshCw className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              }>
+                <Model3DPreview modelUrl={modelUrl} className="h-64 w-full" />
+              </Suspense>
+            </div>
+          )}
+
           <input
             ref={fileInputRef}
             type="file"
@@ -201,24 +220,33 @@ export function SettingsManagement() {
             className="hidden"
           />
 
-          <Button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingModel}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            {uploadingModel ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload New 3D Model
-              </>
-            )}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingModel}
+              variant="outline"
+            >
+              {uploadingModel ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload New 3D Model
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              {showPreview ? "Hide Preview" : "Show Preview"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
