@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText } from "lucide-react";
+import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
@@ -13,6 +13,8 @@ import { SettingsManagement } from "@/components/admin/SettingsManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import ContactSubmissions from "@/components/admin/ContactSubmissions";
 import BlogManagement from "@/components/admin/BlogManagement";
+import UserManagement from "@/components/admin/UserManagement";
+import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -128,6 +130,20 @@ export default function Admin() {
     );
   }
 
+  return <AdminDashboard onLogout={handleLogout} />;
+}
+
+function AdminDashboard({ onLogout }: { onLogout: () => void }) {
+  const { hasPermission, isSuperAdmin, loading: permLoading } = useAdminPermissions();
+
+  if (permLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p>Loading permissions...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -138,70 +154,110 @@ export default function Admin() {
             </Link>
             <h1 className="font-display text-3xl font-bold">Content Manager</h1>
           </div>
-          <Button onClick={handleLogout} variant="outline">
+          <Button onClick={onLogout} variant="outline">
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 h-auto p-1">
-            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Messages</span>
-            </TabsTrigger>
-            <TabsTrigger value="blog" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Blog</span>
-            </TabsTrigger>
-            <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Projects</span>
-            </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Team</span>
-            </TabsTrigger>
-            <TabsTrigger value="awards" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Awards</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
-              <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 gap-1 h-auto p-1">
+            {hasPermission('analytics') && (
+              <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Analytics</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('messages') && (
+              <TabsTrigger value="messages" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Messages</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('blog') && (
+              <TabsTrigger value="blog" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Blog</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('projects') && (
+              <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Projects</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('team') && (
+              <TabsTrigger value="team" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Team</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('awards') && (
+              <TabsTrigger value="awards" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Awards</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('settings') && (
+              <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('users') && (
+              <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <UserCog className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Users</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
-          <TabsContent value="analytics">
-            <AnalyticsDashboard />
-          </TabsContent>
+          {hasPermission('analytics') && (
+            <TabsContent value="analytics">
+              <AnalyticsDashboard />
+            </TabsContent>
+          )}
 
-          <TabsContent value="messages">
-            <ContactSubmissions />
-          </TabsContent>
+          {hasPermission('messages') && (
+            <TabsContent value="messages">
+              <ContactSubmissions />
+            </TabsContent>
+          )}
 
-          <TabsContent value="blog">
-            <BlogManagement />
-          </TabsContent>
+          {hasPermission('blog') && (
+            <TabsContent value="blog">
+              <BlogManagement />
+            </TabsContent>
+          )}
 
-          <TabsContent value="projects">
-            <ProjectsManagement />
-          </TabsContent>
+          {hasPermission('projects') && (
+            <TabsContent value="projects">
+              <ProjectsManagement />
+            </TabsContent>
+          )}
 
-          <TabsContent value="team">
-            <TeamManagement />
-          </TabsContent>
+          {hasPermission('team') && (
+            <TabsContent value="team">
+              <TeamManagement />
+            </TabsContent>
+          )}
 
-          <TabsContent value="awards">
-            <AwardsManagement />
-          </TabsContent>
+          {hasPermission('awards') && (
+            <TabsContent value="awards">
+              <AwardsManagement />
+            </TabsContent>
+          )}
 
-          <TabsContent value="settings">
-            <SettingsManagement />
-          </TabsContent>
+          {hasPermission('settings') && (
+            <TabsContent value="settings">
+              <SettingsManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('users') && (
+            <TabsContent value="users">
+              <UserManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
