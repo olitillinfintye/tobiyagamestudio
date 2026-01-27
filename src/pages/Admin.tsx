@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings } from "lucide-react";
+import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { AwardsManagement } from "@/components/admin/AwardsManagement";
 import { SettingsManagement } from "@/components/admin/SettingsManagement";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import ContactSubmissions from "@/components/admin/ContactSubmissions";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -140,8 +142,16 @@ export default function Admin() {
           </Button>
         </div>
 
-        <Tabs defaultValue="projects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              <span className="hidden sm:inline">Messages</span>
+            </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               <span className="hidden sm:inline">Projects</span>
@@ -159,6 +169,14 @@ export default function Admin() {
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <ContactSubmissions />
+          </TabsContent>
 
           <TabsContent value="projects">
             <ProjectsManagement />
