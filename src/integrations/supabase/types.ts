@@ -14,20 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_users: {
+      admin_permissions: {
         Row: {
           created_at: string
           id: string
+          permission: Database["public"]["Enums"]["admin_permission"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          permission: Database["public"]["Enums"]["admin_permission"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          permission?: Database["public"]["Enums"]["admin_permission"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          is_super_admin: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_super_admin?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_super_admin?: boolean
           user_id?: string
         }
         Relationships: []
@@ -250,9 +274,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_permission: {
+        Args: {
+          _permission: Database["public"]["Enums"]["admin_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      admin_permission:
+        | "messages"
+        | "blog"
+        | "projects"
+        | "team"
+        | "awards"
+        | "settings"
+        | "analytics"
+        | "users"
       project_category: "vr" | "ar" | "interactive" | "award"
     }
     CompositeTypes: {
@@ -381,6 +422,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_permission: [
+        "messages",
+        "blog",
+        "projects",
+        "team",
+        "awards",
+        "settings",
+        "analytics",
+        "users",
+      ],
       project_category: ["vr", "ar", "interactive", "award"],
     },
   },
