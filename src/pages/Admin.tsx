@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { LogOut, ArrowLeft, Layers, Users, Trophy } from "lucide-react";
+import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { AwardsManagement } from "@/components/admin/AwardsManagement";
+import { SettingsManagement } from "@/components/admin/SettingsManagement";
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -140,7 +141,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="projects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               <span className="hidden sm:inline">Projects</span>
@@ -152,6 +153,10 @@ export default function Admin() {
             <TabsTrigger value="awards" className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">Awards</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -165,6 +170,10 @@ export default function Admin() {
 
           <TabsContent value="awards">
             <AwardsManagement />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <SettingsManagement />
           </TabsContent>
         </Tabs>
       </div>

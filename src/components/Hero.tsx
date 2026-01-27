@@ -3,8 +3,45 @@ import { ChevronDown, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 import VRHeadset3D from "./VRHeadset3D";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface HeroStat {
+  number: string;
+  label: string;
+}
 
 export default function Hero() {
+  const [stats, setStats] = useState<HeroStat[]>([
+    { number: "15+", label: "Projects" },
+    { number: "6", label: "Team Members" },
+    { number: "3", label: "Awards" },
+    { number: "2+", label: "Years" },
+  ]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("*")
+        .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years"]);
+
+      if (data && data.length > 0) {
+        const keyOrder = ["hero_projects", "hero_team_members", "hero_awards", "hero_years"];
+        const sortedStats = keyOrder.map((key) => {
+          const found = data.find((d: any) => d.key === key);
+          return found ? { number: found.value, label: found.label } : null;
+        }).filter(Boolean) as HeroStat[];
+        
+        if (sortedStats.length === 4) {
+          setStats(sortedStats);
+        }
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const scrollToWorks = () => {
     const element = document.getElementById("works");
     if (element) {
@@ -98,12 +135,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 1 }}
           className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto"
         >
-          {[
-            { number: "15+", label: "Projects" },
-            { number: "6", label: "Team Members" },
-            { number: "3", label: "Awards" },
-            { number: "2+", label: "Years" },
-          ].map((stat, index) => (
+          {stats.map((stat, index) => (
             <div key={index} className="text-center">
               <div className="font-display text-3xl md:text-4xl font-bold gradient-text mb-1">
                 {stat.number}
