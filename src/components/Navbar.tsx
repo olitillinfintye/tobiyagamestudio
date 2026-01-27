@@ -56,7 +56,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <img src={tobiyaLogo} alt="Tobiya Studio" className="h-14 w-auto transition-transform duration-300 hover:scale-110 rounded-md" />
+            <img src={tobiyaLogo} alt="Tobiya Studio" className="h-28 w-auto transition-transform duration-300 hover:scale-110 rounded-md" />
           </Link>
 
           {/* Desktop Navigation */}
