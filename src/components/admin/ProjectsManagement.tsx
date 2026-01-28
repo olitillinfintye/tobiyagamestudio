@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Trash2, Edit } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
+import { GalleryUpload } from "./GalleryUpload";
 
 type Project = {
   id: string;
@@ -20,6 +21,7 @@ type Project = {
   tools_used: string[] | null;
   project_link: string | null;
   featured: boolean | null;
+  gallery_images: string[] | null;
 };
 
 export function ProjectsManagement() {
@@ -37,6 +39,7 @@ export function ProjectsManagement() {
     tools_used: string;
     project_link: string;
     featured: boolean;
+    gallery_images: string[];
   }>({
     title: "",
     slug: "",
@@ -48,6 +51,7 @@ export function ProjectsManagement() {
     tools_used: "",
     project_link: "",
     featured: false,
+    gallery_images: [],
   });
 
   useEffect(() => {
@@ -62,8 +66,17 @@ export function ProjectsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const projectData = {
-      ...formData,
+      title: formData.title,
+      slug: formData.slug,
+      category: formData.category,
+      short_description: formData.short_description,
+      full_description: formData.full_description,
+      cover_image_url: formData.cover_image_url,
+      video_url: formData.video_url,
+      project_link: formData.project_link,
+      featured: formData.featured,
       tools_used: formData.tools_used.split(",").map((t) => t.trim()).filter(Boolean),
+      gallery_images: formData.gallery_images,
     };
 
     if (editingProject) {
@@ -96,6 +109,7 @@ export function ProjectsManagement() {
       tools_used: "",
       project_link: "",
       featured: false,
+      gallery_images: [],
     });
     setEditingProject(null);
     setShowForm(false);
@@ -114,6 +128,7 @@ export function ProjectsManagement() {
       tools_used: project.tools_used?.join(", ") || "",
       project_link: project.project_link || "",
       featured: project.featured || false,
+      gallery_images: project.gallery_images || [],
     });
     setShowForm(true);
   };
@@ -196,6 +211,13 @@ export function ProjectsManagement() {
               className="bg-background/50 md:col-span-2"
               rows={4}
             />
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium mb-2 block">Gallery Images</label>
+              <GalleryUpload
+                images={formData.gallery_images}
+                onChange={(urls) => setFormData({ ...formData, gallery_images: urls })}
+              />
+            </div>
             <div className="md:col-span-2 flex gap-2">
               <Button type="submit">{editingProject ? "Update" : "Create"}</Button>
               <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
