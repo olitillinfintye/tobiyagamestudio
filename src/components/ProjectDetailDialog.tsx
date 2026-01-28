@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Project {
   id: string;
@@ -25,28 +26,86 @@ interface ProjectDetailDialogProps {
 }
 
 export default function ProjectDetailDialog({ project, open, onOpenChange }: ProjectDetailDialogProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   if (!project) return null;
 
+  // Combine cover image with gallery images for carousel
+  const allImages = [
+    ...(project.cover_image_url ? [project.cover_image_url] : []),
+    ...(project.gallery_images || []),
+  ];
+
+  const hasMultipleImages = allImages.length > 1;
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % allImages.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setCurrentSlide(0);
+    }
+    onOpenChange(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
-        {/* Hero Image */}
+        {/* Hero Image Carousel */}
         <div className="relative h-48 sm:h-64 md:h-80 overflow-hidden">
-          {project.cover_image_url ? (
-            <img
-              src={project.cover_image_url}
-              alt={project.title}
-              className="w-full h-full object-cover"
-            />
+          {allImages.length > 0 ? (
+            <>
+              <img
+                src={allImages[currentSlide]}
+                alt={`${project.title} - Image ${currentSlide + 1}`}
+                className="w-full h-full object-cover transition-opacity duration-300"
+              />
+              
+              {/* Navigation Arrows */}
+              {hasMultipleImages && (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 hover:bg-background shadow-lg z-10"
+                    onClick={prevSlide}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 hover:bg-background shadow-lg z-10"
+                    onClick={nextSlide}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </>
+              )}
+              
+              {/* Slide Counter */}
+              {hasMultipleImages && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/80 px-3 py-1 rounded-full text-sm font-medium z-10">
+                  {currentSlide + 1} / {allImages.length}
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary flex items-center justify-center">
               <span className="text-4xl font-display text-primary/50">{project.title[0]}</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
           
           {/* Category Badge */}
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-10">
             <Badge variant="secondary" className="capitalize">
               {project.category}
             </Badge>
@@ -80,18 +139,28 @@ export default function ProjectDetailDialog({ project, open, onOpenChange }: Pro
               </div>
             )}
 
-            {/* Gallery */}
-            {project.gallery_images && project.gallery_images.length > 0 && (
+            {/* Thumbnail Gallery Strip */}
+            {hasMultipleImages && (
               <div>
                 <h4 className="text-sm font-semibold mb-2">Gallery</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {project.gallery_images.map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
-                      alt={`${project.title} gallery ${index + 1}`}
-                      className="w-full h-24 sm:h-32 object-cover rounded-lg"
-                    />
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border-2 transition-all ${
+                        idx === currentSlide 
+                          ? "border-primary ring-2 ring-primary/30" 
+                          : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img 
+                        src={img} 
+                        alt={`Thumbnail ${idx + 1}`} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </button>
                   ))}
                 </div>
               </div>
@@ -112,7 +181,7 @@ export default function ProjectDetailDialog({ project, open, onOpenChange }: Pro
                     />
                   ) : project.video_url.includes('vimeo.com') ? (
                     <iframe
-                      src={project.video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                      src={project.video_url.replace('vimeo.com/', 'player.vimeo.com/video/').split('?')[0]}
                       className="w-full h-full"
                       allowFullScreen
                       allow="autoplay; fullscreen; picture-in-picture"
