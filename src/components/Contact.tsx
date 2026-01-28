@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-const contactInfo = [
+interface ContactInfo {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  href: string | null;
+}
+
+const iconMap: Record<string, React.ElementType> = {
+  contact_email: Mail,
+  contact_phone: Phone,
+  contact_location: MapPin,
+  contact_website: Globe,
+};
+
+const defaultContactInfo: ContactInfo[] = [
   {
     icon: Mail,
     label: "Email",
@@ -37,6 +51,7 @@ const contactInfo = [
 export default function Contact() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [contactInfo, setContactInfo] = useState<ContactInfo[]>(defaultContactInfo);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -44,6 +59,40 @@ export default function Contact() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchContactInfo();
+  }, []);
+
+  const fetchContactInfo = async () => {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("*")
+      .in("key", ["contact_email", "contact_phone", "contact_location", "contact_website"]);
+
+    if (data && data.length > 0) {
+      const updatedInfo = data.map((setting: any) => {
+        const icon = iconMap[setting.key] || Globe;
+        let href: string | null = null;
+        
+        if (setting.key === "contact_email") {
+          href = `mailto:${setting.value}`;
+        } else if (setting.key === "contact_phone") {
+          href = `tel:${setting.value.replace(/\s/g, '')}`;
+        } else if (setting.key === "contact_website") {
+          href = setting.value.startsWith("http") ? setting.value : `https://${setting.value}`;
+        }
+
+        return {
+          icon,
+          label: setting.label || setting.key,
+          value: setting.value,
+          href,
+        };
+      });
+      setContactInfo(updatedInfo);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

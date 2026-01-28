@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
+import { SocialLinksEditor, SocialLink } from "./SocialLinksEditor";
 
 type TeamMember = {
   id: string;
@@ -16,6 +17,7 @@ type TeamMember = {
   display_order: number | null;
   linkedin_url: string | null;
   twitter_url: string | null;
+  social_links: unknown;
 };
 
 export function TeamManagement() {
@@ -30,6 +32,7 @@ export function TeamManagement() {
     display_order: 0,
     linkedin_url: "",
     twitter_url: "",
+    social_links: [] as SocialLink[],
   });
 
   useEffect(() => {
@@ -38,18 +41,29 @@ export function TeamManagement() {
 
   const fetchMembers = async () => {
     const { data } = await supabase.from("team_members").select("*").order("display_order");
-    if (data) setMembers(data);
+    if (data) setMembers(data as TeamMember[]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const dataToSave = {
+      name: formData.name,
+      role: formData.role,
+      bio: formData.bio,
+      photo_url: formData.photo_url,
+      display_order: formData.display_order,
+      linkedin_url: formData.linkedin_url,
+      twitter_url: formData.twitter_url,
+      social_links: JSON.parse(JSON.stringify(formData.social_links)),
+    };
+    
     if (editingMember) {
-      const { error } = await supabase.from("team_members").update(formData).eq("id", editingMember.id);
+      const { error } = await supabase.from("team_members").update(dataToSave).eq("id", editingMember.id);
       if (error) toast.error(error.message);
       else { toast.success("Team member updated!"); resetForm(); fetchMembers(); }
     } else {
-      const { error } = await supabase.from("team_members").insert(formData);
+      const { error } = await supabase.from("team_members").insert(dataToSave);
       if (error) toast.error(error.message);
       else { toast.success("Team member added!"); resetForm(); fetchMembers(); }
     }
@@ -63,13 +77,27 @@ export function TeamManagement() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", role: "", bio: "", photo_url: "", display_order: 0, linkedin_url: "", twitter_url: "" });
+    setFormData({ name: "", role: "", bio: "", photo_url: "", display_order: 0, linkedin_url: "", twitter_url: "", social_links: [] });
     setEditingMember(null);
     setShowForm(false);
   };
 
   const startEdit = (member: TeamMember) => {
     setEditingMember(member);
+    // Parse social_links if it's a string (from JSON)
+    let parsedSocialLinks: SocialLink[] = [];
+    if (member.social_links) {
+      if (typeof member.social_links === 'string') {
+        try {
+          parsedSocialLinks = JSON.parse(member.social_links);
+        } catch {
+          parsedSocialLinks = [];
+        }
+      } else if (Array.isArray(member.social_links)) {
+        parsedSocialLinks = member.social_links as SocialLink[];
+      }
+    }
+    
     setFormData({
       name: member.name,
       role: member.role,
@@ -78,6 +106,7 @@ export function TeamManagement() {
       display_order: member.display_order || 0,
       linkedin_url: member.linkedin_url || "",
       twitter_url: member.twitter_url || "",
+      social_links: parsedSocialLinks,
     });
     setShowForm(true);
   };
@@ -130,17 +159,23 @@ export function TeamManagement() {
               rows={3}
             />
             <Input
-              placeholder="LinkedIn URL"
+              placeholder="LinkedIn URL (legacy)"
               value={formData.linkedin_url}
               onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
               className="bg-background/50"
             />
             <Input
-              placeholder="Twitter/X URL"
+              placeholder="Twitter/X URL (legacy)"
               value={formData.twitter_url}
               onChange={(e) => setFormData({ ...formData, twitter_url: e.target.value })}
               className="bg-background/50"
             />
+            <div className="md:col-span-2">
+              <SocialLinksEditor
+                value={formData.social_links}
+                onChange={(links) => setFormData({ ...formData, social_links: links })}
+              />
+            </div>
             <div className="md:col-span-2 flex gap-2">
               <Button type="submit">{editingMember ? "Update" : "Create"}</Button>
               <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>

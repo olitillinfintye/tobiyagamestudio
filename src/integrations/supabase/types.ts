@@ -285,6 +285,7 @@ export type Database = {
           name: string
           photo_url: string | null
           role: string
+          social_links: Json | null
           twitter_url: string | null
         }
         Insert: {
@@ -296,6 +297,7 @@ export type Database = {
           name: string
           photo_url?: string | null
           role: string
+          social_links?: Json | null
           twitter_url?: string | null
         }
         Update: {
@@ -307,6 +309,7 @@ export type Database = {
           name?: string
           photo_url?: string | null
           role?: string
+          social_links?: Json | null
           twitter_url?: string | null
         }
         Relationships: []

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Save, RefreshCw, Upload, Box, Eye } from "lucide-react";
+import { ContactSettings } from "./ContactSettings";
 
 // Lazy load the 3D preview component
 const Model3DPreview = lazy(() => import("@/components/Model3DPreview"));
@@ -139,6 +140,9 @@ export function SettingsManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Contact Information Section */}
+      <ContactSettings />
+
       {/* Hero Stats Section */}
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-6">
