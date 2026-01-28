@@ -1,7 +1,13 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
-import { Linkedin } from "lucide-react";
+import { Linkedin, Twitter, Facebook, Instagram, Youtube, Github, Send, MessageCircle, Music, Globe, Mail, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+interface SocialLink {
+  platform: string;
+  url: string;
+  icon: string;
+}
 
 interface TeamMember {
   id: string;
@@ -11,7 +17,25 @@ interface TeamMember {
   photo_url: string | null;
   linkedin_url: string | null;
   twitter_url: string | null;
+  social_links: unknown;
 }
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  Linkedin,
+  Twitter,
+  Facebook,
+  Instagram,
+  Youtube,
+  Github,
+  Send,
+  MessageCircle,
+  Music,
+  Globe,
+  Mail,
+  Link: LinkIcon,
+  Palette: Globe,
+  Dribbble: Globe,
+};
 
 const defaultTeam: TeamMember[] = [
   {
@@ -22,6 +46,7 @@ const defaultTeam: TeamMember[] = [
     photo_url: null,
     linkedin_url: null,
     twitter_url: null,
+    social_links: null,
   },
   {
     id: "2",
@@ -31,6 +56,7 @@ const defaultTeam: TeamMember[] = [
     photo_url: null,
     linkedin_url: null,
     twitter_url: null,
+    social_links: null,
   },
   {
     id: "3",
@@ -40,6 +66,7 @@ const defaultTeam: TeamMember[] = [
     photo_url: null,
     linkedin_url: null,
     twitter_url: null,
+    social_links: null,
   },
   {
     id: "4",
@@ -49,6 +76,7 @@ const defaultTeam: TeamMember[] = [
     photo_url: null,
     linkedin_url: null,
     twitter_url: null,
+    social_links: null,
   },
   {
     id: "5",
@@ -58,6 +86,7 @@ const defaultTeam: TeamMember[] = [
     photo_url: null,
     linkedin_url: null,
     twitter_url: null,
+    social_links: null,
   },
   {
     id: "6",
@@ -67,6 +96,7 @@ const defaultTeam: TeamMember[] = [
     photo_url: null,
     linkedin_url: null,
     twitter_url: null,
+    social_links: null,
   },
 ];
 
@@ -88,20 +118,33 @@ export default function Team() {
 
       if (error) throw error;
       if (data && data.length > 0) {
-        setTeam(data);
+        setTeam(data as TeamMember[]);
       }
     } catch (error) {
       console.log("Using default team data");
     }
   };
 
+  const getSocialLinks = (member: TeamMember): SocialLink[] => {
+    if (!member.social_links) return [];
+    if (typeof member.social_links === 'string') {
+      try {
+        return JSON.parse(member.social_links);
+      } catch {
+        return [];
+      }
+    }
+    if (Array.isArray(member.social_links)) {
+      return member.social_links as SocialLink[];
+    }
+    return [];
+  };
+
   return (
     <section id="team" className="section-padding relative bg-secondary/30" ref={ref}>
-      {/* Background */}
       <div className="absolute inset-0 grid-overlay opacity-20" />
       
       <div className="container mx-auto px-4 relative">
-        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -119,63 +162,80 @@ export default function Team() {
           </p>
         </motion.div>
 
-        {/* Team Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-          {team.map((member, index) => (
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.1 * index }}
-              className="glass-card overflow-hidden group team-card"
-            >
-              {/* Photo */}
-              <div className="relative h-40 sm:h-64 overflow-hidden">
-                {member.photo_url ? (
-                  <img
-                    src={member.photo_url}
-                    alt={member.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 via-secondary to-accent/10 flex items-center justify-center">
-                    <span className="text-3xl sm:text-5xl font-display text-primary/50">
-                      {member.name.split(" ").map((n) => n[0]).join("")}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
-                {/* Social Links - Show on hover - Hidden on mobile */}
-                {member.linkedin_url && (
-                  <div className="hidden sm:flex absolute bottom-4 left-0 right-0 justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-                    <a
-                      href={member.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                    >
-                      <Linkedin className="w-5 h-5" />
-                    </a>
-                  </div>
-                )}
-              </div>
+          {team.map((member, index) => {
+            const socialLinks = getSocialLinks(member);
+            const hasAnySocialLink = socialLinks.length > 0 || member.linkedin_url;
+            
+            return (
+              <motion.div
+                key={member.id}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.1 * index }}
+                className="glass-card overflow-hidden group team-card"
+              >
+                <div className="relative h-40 sm:h-64 overflow-hidden">
+                  {member.photo_url ? (
+                    <img
+                      src={member.photo_url}
+                      alt={member.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 via-secondary to-accent/10 flex items-center justify-center">
+                      <span className="text-3xl sm:text-5xl font-display text-primary/50">
+                        {member.name.split(" ").map((n) => n[0]).join("")}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  {hasAnySocialLink && (
+                    <div className="hidden sm:flex absolute bottom-4 left-0 right-0 justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+                      {socialLinks.map((link, i) => {
+                        const IconComponent = ICON_MAP[link.icon] || LinkIcon;
+                        return (
+                          <a
+                            key={i}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-9 h-9 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                            title={link.platform}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                          </a>
+                        );
+                      })}
+                      {socialLinks.length === 0 && member.linkedin_url && (
+                        <a
+                          href={member.linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-9 h-9 rounded-full bg-card/90 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                        >
+                          <Linkedin className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-              {/* Info */}
-              <div className="p-4 sm:p-6 text-center">
-                <h3 className="font-display text-base sm:text-xl font-bold mb-1 group-hover:text-primary transition-colors truncate">
-                  {member.name}
-                </h3>
-                <p className="text-xs sm:text-sm text-primary mb-2 sm:mb-3 truncate">{member.role}</p>
-                {member.bio && (
-                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{member.bio}</p>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                <div className="p-4 sm:p-6 text-center">
+                  <h3 className="font-display text-base sm:text-xl font-bold mb-1 group-hover:text-primary transition-colors truncate">
+                    {member.name}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-primary mb-2 sm:mb-3 truncate">{member.role}</p>
+                  {member.bio && (
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{member.bio}</p>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Join Us CTA */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
