@@ -50,7 +50,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 md:pt-0">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 md:pt-0 w-full max-w-full">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
@@ -64,9 +64,9 @@ export default function Hero() {
       {/* Grid Overlay */}
       <div className="absolute inset-0 grid-overlay opacity-50" />
 
-      {/* Glow Effects */}
-      <div className="absolute top-1/3 left-1/4 w-48 md:w-96 h-48 md:h-96 bg-primary/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/3 right-1/4 w-36 md:w-72 h-36 md:h-72 bg-accent/10 rounded-full blur-3xl" />
+      {/* Glow Effects - contained within viewport */}
+      <div className="absolute top-1/3 left-0 md:left-1/4 w-32 md:w-96 h-32 md:h-96 bg-primary/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 right-0 md:right-1/4 w-24 md:w-72 h-24 md:h-72 bg-accent/10 rounded-full blur-3xl" />
 
       {/* 3D VR Headset - Hidden on mobile */}
       <div className="hidden md:block">
@@ -74,7 +74,7 @@ export default function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 text-center">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 text-center w-full max-w-full box-border">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
