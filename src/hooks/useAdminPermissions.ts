@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users';
+type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services';
 
 interface UseAdminPermissionsReturn {
   permissions: AdminPermission[];
@@ -33,7 +33,7 @@ export function useAdminPermissions(): UseAdminPermissionsReturn {
 
         if (adminData?.is_super_admin) {
           setIsSuperAdmin(true);
-          setPermissions(['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics', 'users']);
+          setPermissions(['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics', 'users', 'services']);
         } else {
           // Fetch specific permissions
           const { data: permData } = await supabase
