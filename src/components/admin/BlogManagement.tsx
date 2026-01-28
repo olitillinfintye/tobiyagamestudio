@@ -2,26 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Search, Filter, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { ImageUpload } from "./ImageUpload";
-
-const BLOG_CATEGORIES = [
-  "General",
-  "News",
-  "Tutorials",
-  "Case Studies",
-  "Industry Insights",
-  "Product Updates",
-];
+import { BlogPostEditor, BLOG_CATEGORIES } from "./BlogPostEditor";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface BlogPost {
   id: string;
@@ -37,20 +25,27 @@ interface BlogPost {
   category: string | null;
 }
 
+interface BlogFormData {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image_url: string;
+  author_name: string;
+  published: boolean;
+  published_at: string;
+  category: string;
+  tags?: string[];
+  meta_title?: string;
+  meta_description?: string;
+}
+
 export default function BlogManagement() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
-    excerpt: "",
-    content: "",
-    cover_image_url: "",
-    author_name: "Tobiya Studio",
-    published: false,
-    published_at: "",
-    category: "General",
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const queryClient = useQueryClient();
 
   const { data: posts, isLoading } = useQuery({
@@ -67,8 +62,8 @@ export default function BlogManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const { published_at, ...rest } = data;
+    mutationFn: async (data: BlogFormData) => {
+      const { published_at, tags, meta_title, meta_description, ...rest } = data;
       const insertData = {
         ...rest,
         published_at: data.published 
@@ -81,14 +76,14 @@ export default function BlogManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts-admin"] });
       toast.success("Blog post created");
-      resetForm();
+      closeEditor();
     },
     onError: () => toast.error("Failed to create post"),
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { published_at, ...rest } = data;
+    mutationFn: async ({ id, data }: { id: string; data: BlogFormData }) => {
+      const { published_at, tags, meta_title, meta_description, ...rest } = data;
       const updateData = {
         ...rest,
         published_at: data.published 
@@ -104,7 +99,7 @@ export default function BlogManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts-admin"] });
       toast.success("Blog post updated");
-      resetForm();
+      closeEditor();
     },
     onError: () => toast.error("Failed to update post"),
   });
@@ -140,298 +135,223 @@ export default function BlogManagement() {
     onError: () => toast.error("Failed to update status"),
   });
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      slug: "",
-      excerpt: "",
-      content: "",
-      cover_image_url: "",
-      author_name: "Tobiya Studio",
-      published: false,
-      published_at: "",
-      category: "General",
-    });
+  const closeEditor = () => {
+    setIsEditorOpen(false);
     setEditingPost(null);
-    setIsDialogOpen(false);
   };
 
   const handleEdit = (post: BlogPost) => {
     setEditingPost(post);
-    setFormData({
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt || "",
-      content: post.content,
-      cover_image_url: post.cover_image_url || "",
-      author_name: post.author_name,
-      published: post.published,
-      published_at: post.published_at ? post.published_at.split("T")[0] : "",
-      category: post.category || "General",
-    });
-    setIsDialogOpen(true);
+    setIsEditorOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title || !formData.slug || !formData.content) {
+  const handleSave = (data: BlogFormData) => {
+    if (!data.title || !data.slug || !data.content) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     if (editingPost) {
-      updateMutation.mutate({ id: editingPost.id, data: formData });
+      updateMutation.mutate({ id: editingPost.id, data });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  };
+  // Filter posts
+  const filteredPosts = posts?.filter((post) => {
+    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = filterCategory === "all" || post.category === filterCategory;
+    const matchesStatus = filterStatus === "all" || 
+      (filterStatus === "published" && post.published) ||
+      (filterStatus === "draft" && !post.published);
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
   if (isLoading) {
     return <div className="text-center py-8">Loading...</div>;
   }
 
+  // Show the full editor when creating/editing
+  if (isEditorOpen) {
+    return (
+      <BlogPostEditor
+        initialData={editingPost ? {
+          title: editingPost.title,
+          slug: editingPost.slug,
+          excerpt: editingPost.excerpt || "",
+          content: editingPost.content,
+          cover_image_url: editingPost.cover_image_url || "",
+          author_name: editingPost.author_name,
+          published: editingPost.published,
+          published_at: editingPost.published_at ? editingPost.published_at.split("T")[0] : "",
+          category: editingPost.category || "General",
+        } : undefined}
+        onSave={handleSave}
+        onCancel={closeEditor}
+        isEditing={!!editingPost}
+        isSaving={createMutation.isPending || updateMutation.isPending}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-xl sm:text-2xl font-bold">Blog Posts</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()} className="w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
-              New Post
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPost ? "Edit Post" : "Create New Post"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      title: e.target.value,
-                      slug: generateSlug(e.target.value),
-                    });
-                  }}
-                  placeholder="Post title"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="slug">Slug *</Label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) =>
-                    setFormData({ ...formData, slug: e.target.value })
-                  }
-                  placeholder="post-url-slug"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="author">Author</Label>
-                <Input
-                  id="author"
-                  value={formData.author_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, author_name: e.target.value })
-                  }
-                  placeholder="Author name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="excerpt">Excerpt</Label>
-                <Textarea
-                  id="excerpt"
-                  value={formData.excerpt}
-                  onChange={(e) =>
-                    setFormData({ ...formData, excerpt: e.target.value })
-                  }
-                  placeholder="Brief summary of the post"
-                  rows={2}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Content *</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
-                  }
-                  placeholder="Write your blog post content here..."
-                  rows={8}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Cover Image</Label>
-                <ImageUpload
-                  value={formData.cover_image_url}
-                  onChange={(url) =>
-                    setFormData({ ...formData, cover_image_url: url })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, category: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BLOG_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="published_at">Publish Date</Label>
-                <Input
-                  id="published_at"
-                  type="date"
-                  value={formData.published_at}
-                  onChange={(e) =>
-                    setFormData({ ...formData, published_at: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="published"
-                  checked={formData.published}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, published: checked })
-                  }
-                />
-                <Label htmlFor="published">Publish immediately</Label>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetForm}
-                  className="w-full sm:w-auto"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="w-full sm:w-auto">
-                  {editingPost ? "Update" : "Create"} Post
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsEditorOpen(true)} className="w-full sm:w-auto">
+          <Plus className="w-4 h-4 mr-2" />
+          New Post
+        </Button>
       </div>
 
-      {posts?.length === 0 ? (
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search posts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-full sm:w-40">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {BLOG_CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-full sm:w-32">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Stats */}
+      <div className="flex gap-4 text-sm text-muted-foreground">
+        <span>Total: {posts?.length || 0}</span>
+        <span>Published: {posts?.filter(p => p.published).length || 0}</span>
+        <span>Drafts: {posts?.filter(p => !p.published).length || 0}</span>
+      </div>
+
+      {/* Posts List */}
+      {filteredPosts?.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No blog posts yet. Create your first post!
+            {posts?.length === 0 
+              ? "No blog posts yet. Create your first post!"
+              : "No posts match your search criteria."
+            }
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {posts?.map((post) => (
-            <Card key={post.id}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="flex gap-4 flex-1 min-w-0">
-                    {post.cover_image_url && (
+          {filteredPosts?.map((post) => (
+            <Card key={post.id} className="overflow-hidden hover:border-primary/50 transition-colors">
+              <CardContent className="p-0">
+                <div className="flex flex-col sm:flex-row">
+                  {/* Cover Image */}
+                  {post.cover_image_url && (
+                    <div className="sm:w-48 h-32 sm:h-auto shrink-0">
                       <img
                         src={post.cover_image_url}
                         alt={post.title}
-                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg shrink-0"
+                        className="w-full h-full object-cover"
                       />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold truncate">{post.title}</h3>
-                        {post.published ? (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500">
-                            <Eye className="w-3 h-3" />
-                            Published
+                    </div>
+                  )}
+                  
+                  {/* Content */}
+                  <div className="flex-1 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <h3 className="font-semibold text-lg truncate">{post.title}</h3>
+                          {post.published ? (
+                            <Badge variant="default" className="bg-green-500/20 text-green-500 hover:bg-green-500/30">
+                              <Eye className="w-3 h-3 mr-1" />
+                              Published
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              <EyeOff className="w-3 h-3 mr-1" />
+                              Draft
+                            </Badge>
+                          )}
+                          {post.category && (
+                            <Badge variant="outline">{post.category}</Badge>
+                          )}
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                          {post.excerpt || post.content.substring(0, 150)}...
+                        </p>
+                        
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(post.created_at), "MMM d, yyyy")}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            <EyeOff className="w-3 h-3" />
-                            Draft
-                          </span>
-                        )}
+                          <span>By {post.author_name}</span>
+                          <span>{post.content.split(/\s+/).length} words</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                        {post.excerpt || post.content.substring(0, 100)}...
-                      </p>
-                      <div className="text-xs text-muted-foreground mt-2">
-                        {post.author_name} •{" "}
-                        {format(new Date(post.created_at), "MMM d, yyyy")}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            togglePublishMutation.mutate({
+                              id: post.id,
+                              published: !post.published,
+                            })
+                          }
+                          title={post.published ? "Unpublish" : "Publish"}
+                        >
+                          {post.published ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(post)}
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(post.id)}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        togglePublishMutation.mutate({
-                          id: post.id,
-                          published: !post.published,
-                        })
-                      }
-                    >
-                      {post.published ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(post)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteMutation.mutate(post.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
                 </div>
               </CardContent>
