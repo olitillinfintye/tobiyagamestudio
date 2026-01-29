@@ -6,69 +6,69 @@
 
 @layer base {
   :root {
-    /* Dark futuristic gaming studio theme */
-    --background: 230 50% 5%;
-    --foreground: 210 40% 98%;
+    /* Light mode - Clean professional theme */
+    --background: 0 0% 100%;
+    --foreground: 230 50% 10%;
 
-    --card: 230 45% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 98%;
+    --card-foreground: 230 50% 10%;
 
-    --popover: 230 45% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 50% 10%;
 
     /* Electric teal primary */
-    --primary: 185 80% 45%;
-    --primary-foreground: 230 50% 5%;
+    --primary: 185 80% 35%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Deep blue secondary */
-    --secondary: 220 60% 15%;
-    --secondary-foreground: 210 40% 98%;
+    /* Light blue secondary */
+    --secondary: 220 30% 92%;
+    --secondary-foreground: 230 50% 10%;
 
-    --muted: 230 30% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 20% 94%;
+    --muted-foreground: 220 15% 40%;
 
-    /* Ethiopian gold accent */
-    --accent: 45 100% 50%;
-    --accent-foreground: 230 50% 5%;
+    /* Gold accent */
+    --accent: 45 100% 45%;
+    --accent-foreground: 230 50% 10%;
 
     --destructive: 0 62.8% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 40% 18%;
-    --input: 220 40% 18%;
-    --ring: 185 80% 45%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 185 80% 35%;
 
     --radius: 0.75rem;
 
     /* Custom colors */
-    --teal: 185 80% 45%;
-    --teal-glow: 185 100% 60%;
-    --deep-blue: 220 70% 12%;
-    --navy: 230 50% 8%;
-    --gold: 45 100% 50%;
-    --ethiopian-green: 145 60% 40%;
-    --ethiopian-red: 0 70% 50%;
+    --teal: 185 80% 35%;
+    --teal-glow: 185 100% 50%;
+    --deep-blue: 220 70% 20%;
+    --navy: 230 50% 15%;
+    --gold: 45 100% 45%;
+    --ethiopian-green: 145 60% 35%;
+    --ethiopian-red: 0 70% 45%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(185 80% 45%), hsl(220 70% 35%));
-    --gradient-hero: linear-gradient(180deg, hsl(230 50% 5%) 0%, hsl(220 70% 12%) 50%, hsl(230 50% 8%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(230 45% 10%), hsl(230 45% 6%));
-    --gradient-glow: radial-gradient(ellipse at center, hsl(185 80% 45% / 0.15), transparent 70%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 100% 50%), hsl(35 100% 45%));
+    --gradient-primary: linear-gradient(135deg, hsl(185 80% 35%), hsl(220 70% 45%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 30% 96%) 0%, hsl(220 40% 92%) 50%, hsl(220 30% 96%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 20% 96%));
+    --gradient-glow: radial-gradient(ellipse at center, hsl(185 80% 35% / 0.1), transparent 70%);
+    --gradient-gold: linear-gradient(135deg, hsl(45 100% 45%), hsl(35 100% 40%));
 
     /* Shadows */
-    --shadow-glow: 0 0 30px hsl(185 80% 45% / 0.3);
-    --shadow-card: 0 10px 40px hsl(0 0% 0% / 0.5);
-    --shadow-button: 0 4px 20px hsl(185 80% 45% / 0.3);
+    --shadow-glow: 0 0 30px hsl(185 80% 35% / 0.2);
+    --shadow-card: 0 10px 40px hsl(220 30% 50% / 0.1);
+    --shadow-button: 0 4px 20px hsl(185 80% 35% / 0.2);
 
-    --sidebar-background: 230 50% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 185 80% 45%;
-    --sidebar-primary-foreground: 230 50% 5%;
-    --sidebar-accent: 220 60% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 40% 18%;
-    --sidebar-ring: 185 80% 45%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 230 50% 10%;
+    --sidebar-primary: 185 80% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 30% 92%;
+    --sidebar-accent-foreground: 230 50% 10%;
+    --sidebar-border: 220 20% 88%;
+    --sidebar-ring: 185 80% 35%;
   }
 
   .dark {
