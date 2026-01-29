@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import tobiyaLogo from "@/assets/tobiya-logo-white.png";
+import { useTheme } from "next-themes";
+import { ThemeToggle } from "./ThemeToggle";
+import tobiyaLogoWhite from "@/assets/tobiya-logo-white.png";
+import tobiyaLogo from "@/assets/tobiya-logo.png";
+
 const navLinks = [{
   name: "Home",
   href: "/"
@@ -25,6 +29,13 @@ const navLinks = [{
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -32,6 +43,8 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const currentLogo = mounted && theme === "light" ? tobiyaLogo : tobiyaLogoWhite;
   const handleNavClick = (href: string) => {
     setIsMobileMenuOpen(false);
     if (href.startsWith("/#")) {
@@ -56,7 +69,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <img src={tobiyaLogo} alt="Tobiya Studio" className="h-28 w-auto transition-transform duration-300 hover:scale-110 rounded-md" />
+            <img src={currentLogo} alt="Tobiya Studio" className="h-28 w-auto transition-transform duration-300 hover:scale-110 rounded-md" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -69,12 +82,16 @@ export default function Navbar() {
           }} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-300 hover-underline">
                 {link.name}
               </a>)}
+            <ThemeToggle />
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 text-foreground" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button className="p-2 text-foreground" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
