@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase } from "lucide-react";
+import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase, Handshake } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
@@ -15,6 +15,7 @@ import ContactSubmissions from "@/components/admin/ContactSubmissions";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
 import { ServicesManagement } from "@/components/admin/ServicesManagement";
+import { PartnersManagement } from "@/components/admin/PartnersManagement";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 
 export default function Admin() {
@@ -161,7 +162,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-5 sm:grid-cols-9 gap-1 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-5 sm:grid-cols-10 gap-1 h-auto p-1">
             {hasPermission('analytics') && (
               <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
                 <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -184,6 +185,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <TabsTrigger value="services" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
                 <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Services</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('settings') && (
+              <TabsTrigger value="partners" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Handshake className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Partners</span>
               </TabsTrigger>
             )}
             {hasPermission('projects') && (
@@ -239,6 +246,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {hasPermission('services') && (
             <TabsContent value="services">
               <ServicesManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('settings') && (
+            <TabsContent value="partners">
+              <PartnersManagement />
             </TabsContent>
           )}
 
