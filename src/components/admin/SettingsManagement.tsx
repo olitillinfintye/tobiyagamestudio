@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Save, RefreshCw, Upload, Box, Eye } from "lucide-react";
+import { Save, RefreshCw, Upload, Box, Eye, Video, Link } from "lucide-react";
 import { ContactSettings } from "./ContactSettings";
+import { Textarea } from "@/components/ui/textarea";
 
 // Lazy load the 3D preview component
 const Model3DPreview = lazy(() => import("@/components/Model3DPreview"));
@@ -28,7 +29,11 @@ export function SettingsManagement() {
   const [modelUrl, setModelUrl] = useState("/models/vr_headset.glb");
   const [uploadingModel, setUploadingModel] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showreelUrl, setShowreelUrl] = useState("");
+  const [savingShowreel, setSavingShowreel] = useState(false);
+  const [uploadingShowreel, setUploadingShowreel] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const showreelInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -39,7 +44,7 @@ export function SettingsManagement() {
     const { data, error } = await supabase
       .from("site_settings")
       .select("*")
-      .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years", "hero_3d_model"]);
+      .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years", "hero_3d_model", "showreel_video_url"]);
 
     if (error) {
       toast.error("Failed to load settings");
@@ -54,6 +59,10 @@ export function SettingsManagement() {
       const modelSetting = data.find((d: any) => d.key === "hero_3d_model");
       if (modelSetting) {
         setModelUrl(modelSetting.value);
+      }
+      const showreelSetting = data.find((d: any) => d.key === "showreel_video_url");
+      if (showreelSetting) {
+        setShowreelUrl(showreelSetting.value);
       }
     }
     setLoading(false);
@@ -126,6 +135,74 @@ export function SettingsManagement() {
       toast.error("Failed to upload model: " + error.message);
     }
     setUploadingModel(false);
+  };
+
+  const handleShowreelUrlSave = async () => {
+    setSavingShowreel(true);
+    try {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({ 
+          key: "showreel_video_url", 
+          value: showreelUrl, 
+          label: "Showreel Video URL",
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (error) throw error;
+      toast.success("Showreel video URL saved successfully!");
+    } catch (error: any) {
+      toast.error("Failed to save showreel URL: " + error.message);
+    }
+    setSavingShowreel(false);
+  };
+
+  const handleShowreelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      toast.error("Please upload a video file");
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Video file is too large. Max size is 100MB");
+      return;
+    }
+
+    setUploadingShowreel(true);
+    try {
+      const fileName = `showreel/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("project-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("project-images")
+        .getPublicUrl(fileName);
+
+      const newVideoUrl = urlData.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from("site_settings")
+        .upsert({ 
+          key: "showreel_video_url", 
+          value: newVideoUrl, 
+          label: "Showreel Video URL",
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (updateError) throw updateError;
+
+      setShowreelUrl(newVideoUrl);
+      toast.success("Showreel video uploaded successfully!");
+    } catch (error: any) {
+      toast.error("Failed to upload video: " + error.message);
+    }
+    setUploadingShowreel(false);
   };
 
   if (loading) {
@@ -249,6 +326,106 @@ export function SettingsManagement() {
             >
               <Eye className="w-4 h-4 mr-2" />
               {showPreview ? "Hide Preview" : "Show Preview"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Showreel Video Section */}
+      <div className="glass-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Video className="w-6 h-6 text-primary" />
+          <h2 className="text-xl font-semibold">Showreel Video</h2>
+        </div>
+
+        <p className="text-muted-foreground text-sm mb-6">
+          Add a video URL (YouTube, Vimeo, or direct link) or upload a video file for the hero section's "Watch Showreel" button.
+        </p>
+
+        <div className="space-y-4">
+          {/* URL Input */}
+          <div className="space-y-2">
+            <Label htmlFor="showreel-url" className="flex items-center gap-2">
+              <Link className="w-4 h-4" />
+              Video URL (YouTube, Vimeo, or direct link)
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="showreel-url"
+                value={showreelUrl}
+                onChange={(e) => setShowreelUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                className="bg-background/50 flex-1"
+              />
+              <Button onClick={handleShowreelUrlSave} disabled={savingShowreel}>
+                {savingShowreel ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Video Preview */}
+          {showreelUrl && (
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Preview</Label>
+              <div className="aspect-video rounded-lg overflow-hidden bg-muted/20 border border-border/50">
+                {showreelUrl.includes('youtube.com') || showreelUrl.includes('youtu.be') ? (
+                  <iframe
+                    src={showreelUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    title="Showreel Preview"
+                  />
+                ) : showreelUrl.includes('vimeo.com') ? (
+                  <iframe
+                    src={showreelUrl.replace('vimeo.com/', 'player.vimeo.com/video/').split('?')[0]}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    title="Showreel Preview"
+                  />
+                ) : (
+                  <video
+                    src={showreelUrl}
+                    className="w-full h-full"
+                    controls
+                    title="Showreel Preview"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Upload Alternative */}
+          <div className="pt-4 border-t border-border/50">
+            <Label className="text-sm text-muted-foreground mb-2 block">Or upload a video file (max 100MB)</Label>
+            <input
+              ref={showreelInputRef}
+              type="file"
+              accept="video/*"
+              onChange={handleShowreelUpload}
+              className="hidden"
+            />
+            <Button 
+              onClick={() => showreelInputRef.current?.click()}
+              disabled={uploadingShowreel}
+              variant="outline"
+            >
+              {uploadingShowreel ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Video File
+                </>
+              )}
             </Button>
           </div>
         </div>
