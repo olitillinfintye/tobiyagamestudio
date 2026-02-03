@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
-import { ChevronDown, Play } from "lucide-react";
+import { ChevronDown, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import heroBg from "@/assets/hero-bg.jpg";
 import VRHeadset3D from "./VRHeadset3D";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
 interface HeroStat {
   number: string;
   label: string;
@@ -23,11 +25,16 @@ export default function Hero() {
     number: "2+",
     label: "Years"
   }]);
+  const [showreelOpen, setShowreelOpen] = useState(false);
+  const [showreelUrl, setShowreelUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchStats = async () => {
-      const {
-        data
-      } = await supabase.from("site_settings").select("*").in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years"]);
+      const { data } = await supabase
+        .from("site_settings")
+        .select("*")
+        .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years", "showreel_video_url"]);
+      
       if (data && data.length > 0) {
         const keyOrder = ["hero_projects", "hero_team_members", "hero_awards", "hero_years"];
         const sortedStats = keyOrder.map(key => {
@@ -39,6 +46,11 @@ export default function Hero() {
         }).filter(Boolean) as HeroStat[];
         if (sortedStats.length === 4) {
           setStats(sortedStats);
+        }
+        
+        const showreelSetting = data.find((d: any) => d.key === "showreel_video_url");
+        if (showreelSetting) {
+          setShowreelUrl(showreelSetting.value);
         }
       }
     };
@@ -127,11 +139,58 @@ export default function Hero() {
           <Button size="lg" onClick={scrollToWorks} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 glow-primary px-6 md:px-8 py-5 md:py-6 text-base md:text-lg font-semibold">
             Explore Our Work
           </Button>
-          <Button size="lg" variant="outline" className="w-full sm:w-auto border-border/50 text-foreground hover:bg-card/50 px-6 md:px-8 py-5 md:py-6 text-base md:text-lg">
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="w-full sm:w-auto border-border/50 text-foreground hover:bg-card/50 px-6 md:px-8 py-5 md:py-6 text-base md:text-lg"
+            onClick={() => setShowreelOpen(true)}
+          >
             <Play className="w-4 h-4 md:w-5 md:h-5 mr-2" />
             Watch Showreel
           </Button>
         </motion.div>
+
+        {/* Showreel Video Dialog */}
+        <Dialog open={showreelOpen} onOpenChange={setShowreelOpen}>
+          <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background/95 backdrop-blur-lg border-border/50">
+            <DialogTitle className="sr-only">Showreel Video</DialogTitle>
+            <div className="relative aspect-video">
+              {showreelUrl ? (
+                showreelUrl.includes('youtube.com') || showreelUrl.includes('youtu.be') ? (
+                  <iframe
+                    src={showreelUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') + '?autoplay=1'}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    title="Showreel"
+                  />
+                ) : showreelUrl.includes('vimeo.com') ? (
+                  <iframe
+                    src={showreelUrl.replace('vimeo.com/', 'player.vimeo.com/video/').split('?')[0] + '?autoplay=1'}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    title="Showreel"
+                  />
+                ) : (
+                  <video
+                    src={showreelUrl}
+                    className="w-full h-full"
+                    controls
+                    autoPlay
+                    title="Showreel"
+                  />
+                )
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full bg-muted/20 text-muted-foreground">
+                  <Play className="w-16 h-16 mb-4 opacity-50" />
+                  <p className="text-lg">Showreel video not configured</p>
+                  <p className="text-sm">Please add a video URL in the admin settings</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Stats */}
         <motion.div initial={{
