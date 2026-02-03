@@ -1,4 +1,4 @@
-import { motion, useAnimationControls } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,8 +12,8 @@ interface Partner {
 export default function Partners() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isPaused, setIsPaused] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimationControls();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
 
   useEffect(() => {
     const fetchPartners = async () => {
@@ -31,39 +31,22 @@ export default function Partners() {
     fetchPartners();
   }, []);
 
-  // Calculate animation duration based on number of partners
-  const duration = partners.length * 3; // 3 seconds per partner
-
+  // Measure the width of one set of logos
   useEffect(() => {
-    if (partners.length === 0) return;
-
-    const startAnimation = () => {
-      controls.start({
-        x: [0, -50 * partners.length + "%"],
-        transition: {
-          x: {
-            repeat: Infinity,
-            repeatType: "loop",
-            duration: duration,
-            ease: "linear",
-          },
-        },
-      });
-    };
-
-    if (!isPaused) {
-      startAnimation();
-    } else {
-      controls.stop();
+    if (scrollRef.current && partners.length > 0) {
+      // Each logo container is approximately 160px (w-32 + margins)
+      const logoWidth = 160;
+      setScrollWidth(logoWidth * partners.length);
     }
-  }, [partners, isPaused, controls, duration]);
+  }, [partners]);
 
   if (partners.length === 0) {
     return null;
   }
 
-  // Duplicate partners for seamless loop
+  // Duplicate partners array for seamless infinite scroll
   const duplicatedPartners = [...partners, ...partners];
+  const duration = partners.length * 2.5; // Adjust speed here
 
   return (
     <section id="partners" className="py-12 md:py-16 relative overflow-hidden bg-secondary/20">
@@ -91,14 +74,25 @@ export default function Partners() {
         onMouseLeave={() => setIsPaused(false)}
       >
         {/* Gradient Overlays */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-secondary/20 via-secondary/20 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-secondary/20 via-secondary/20 to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-        {/* Scrolling Logos with Framer Motion */}
-        <div ref={containerRef} className="overflow-hidden py-4">
+        {/* Scrolling Logos */}
+        <div className="overflow-hidden py-4">
           <motion.div
-            animate={controls}
+            ref={scrollRef}
             className="flex items-center"
+            animate={{
+              x: isPaused ? undefined : [-scrollWidth, 0],
+            }}
+            transition={{
+              x: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: duration,
+                ease: "linear",
+              },
+            }}
             style={{ width: "fit-content" }}
           >
             {duplicatedPartners.map((partner, index) => (
