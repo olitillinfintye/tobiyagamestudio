@@ -7,6 +7,39 @@ import VRHeadset3D from "./VRHeadset3D";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper function to convert YouTube URL to embed URL
+const getYouTubeEmbedUrl = (url: string): string => {
+  let videoId = '';
+  
+  // Handle youtube.com/watch?v=VIDEO_ID
+  const watchMatch = url.match(/[?&]v=([^&]+)/);
+  if (watchMatch) {
+    videoId = watchMatch[1];
+  }
+  
+  // Handle youtu.be/VIDEO_ID
+  const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
+  if (shortMatch) {
+    videoId = shortMatch[1];
+  }
+  
+  // Handle youtube.com/embed/VIDEO_ID (already embed format)
+  const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/);
+  if (embedMatch) {
+    videoId = embedMatch[1];
+  }
+  
+  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : url;
+};
+
+// Helper function to convert Vimeo URL to embed URL
+const getVimeoEmbedUrl = (url: string): string => {
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+  }
+  return url;
+};
 interface HeroStat {
   number: string;
   label: string;
@@ -155,10 +188,10 @@ export default function Hero() {
           <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background/95 backdrop-blur-lg border-border/50">
             <DialogTitle className="sr-only">Showreel Video</DialogTitle>
             <div className="relative aspect-video">
-              {showreelUrl ? (
+            {showreelUrl ? (
                 showreelUrl.includes('youtube.com') || showreelUrl.includes('youtu.be') ? (
                   <iframe
-                    src={showreelUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') + '?autoplay=1'}
+                    src={getYouTubeEmbedUrl(showreelUrl)}
                     className="w-full h-full"
                     allowFullScreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -166,7 +199,7 @@ export default function Hero() {
                   />
                 ) : showreelUrl.includes('vimeo.com') ? (
                   <iframe
-                    src={showreelUrl.replace('vimeo.com/', 'player.vimeo.com/video/').split('?')[0] + '?autoplay=1'}
+                    src={getVimeoEmbedUrl(showreelUrl)}
                     className="w-full h-full"
                     allowFullScreen
                     allow="autoplay; fullscreen; picture-in-picture"
