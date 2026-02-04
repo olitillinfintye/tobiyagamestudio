@@ -163,7 +163,7 @@ export default function UserManagement() {
       if (!isSuperAdminRole && selectedPermissions.length > 0) {
         const permissionInserts = selectedPermissions.map((permission) => ({
           user_id: authData.user!.id,
-          permission,
+          permission: permission as any,
         }));
 
         const { error: permError } = await supabase
@@ -260,7 +260,7 @@ export default function UserManagement() {
       if (!isSuperAdminRole && selectedPermissions.length > 0) {
         const permissionInserts = selectedPermissions.map((permission) => ({
           user_id: editingUser.user_id,
-          permission,
+          permission: permission as any,
         }));
 
         const { error: permError } = await supabase
@@ -380,7 +380,7 @@ export default function UserManagement() {
                       <SelectItem key={role.value} value={role.value}>
                         <div className="flex items-center gap-2">
                           {role.value === 'super_admin' ? (
-                            <Crown className="w-4 h-4 text-amber-500" />
+                            <Crown className="w-4 h-4 text-accent-foreground" />
                           ) : (
                             <User className="w-4 h-4 text-primary" />
                           )}
@@ -459,8 +459,8 @@ export default function UserManagement() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-full bg-amber-500/10">
-              <Crown className="w-5 h-5 text-amber-500" />
+            <div className="p-3 rounded-full bg-accent">
+              <Crown className="w-5 h-5 text-accent-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold">{adminUsers.filter(u => u.is_super_admin).length}</p>
@@ -502,9 +502,9 @@ export default function UserManagement() {
                   <TableRow key={admin.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                           {admin.is_super_admin ? (
-                            <Crown className="w-4 h-4 text-amber-500" />
+                            <Crown className="w-4 h-4 text-accent-foreground" />
                           ) : (
                             <User className="w-4 h-4 text-primary" />
                           )}
@@ -521,7 +521,7 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell>
                       {admin.is_super_admin ? (
-                        <Badge className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30">
+                        <Badge variant="default" className="bg-accent text-accent-foreground">
                           <Crown className="w-3 h-3 mr-1" />
                           Super Admin
                         </Badge>
@@ -615,7 +615,7 @@ export default function UserManagement() {
                       <SelectItem key={role.value} value={role.value}>
                         <div className="flex items-center gap-2">
                           {role.value === 'super_admin' ? (
-                            <Crown className="w-4 h-4 text-amber-500" />
+                            <Crown className="w-4 h-4 text-accent-foreground" />
                           ) : (
                             <User className="w-4 h-4 text-primary" />
                           )}
@@ -626,7 +626,7 @@ export default function UserManagement() {
                   </SelectContent>
                 </Select>
                 {editingUser.user_id === currentUserId && (
-                  <p className="text-xs text-amber-500">You cannot change your own role</p>
+                  <p className="text-xs text-destructive">You cannot change your own role</p>
                 )}
               </div>
 

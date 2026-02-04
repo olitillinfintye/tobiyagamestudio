@@ -372,6 +372,7 @@ export type Database = {
         | "settings"
         | "analytics"
         | "users"
+        | "services"
       project_category: "vr" | "ar" | "interactive" | "award"
     }
     CompositeTypes: {
@@ -509,6 +510,7 @@ export const Constants = {
         "settings",
         "analytics",
         "users",
+        "services",
       ],
       project_category: ["vr", "ar", "interactive", "award"],
     },
