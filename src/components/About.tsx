@@ -43,7 +43,8 @@ export default function About() {
           <span className="inline-block px-4 py-2 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
             About Us
           </span>
-          <h2 className="font-display text-3xl md:text-5xl font-bold mb-6">XR Innovation in Ethiopia<span className="gradient-text">XR Innovation</span> in Ethiopia
+          <h2 className="font-display text-3xl md:text-5xl font-bold mb-6">
+            <span className="gradient-text">XR Innovation</span> in Ethiopia
           </h2>
           <p className="text-muted-foreground max-w-3xl mx-auto text-lg">
             Tobiya Game Studio is an innovator in game development, with a high focus on extended reality (XR) and interactive experiences. Started by a team of passionate creators and technologists, the studio aims to push the boundaries of storytelling and engagement through immersive technologies in Ethiopia.
