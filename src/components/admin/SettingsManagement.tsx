@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Save, RefreshCw, Upload, Box, Eye, Video, Link } from "lucide-react";
+import { Save, RefreshCw, Upload, Box, Eye, Video, Link, Share2 } from "lucide-react";
 import { ContactSettings } from "./ContactSettings";
-import { Textarea } from "@/components/ui/textarea";
+import { SocialLinksEditor, SocialLink } from "./SocialLinksEditor";
 
 // Lazy load the 3D preview component
 const Model3DPreview = lazy(() => import("@/components/Model3DPreview"));
@@ -32,6 +32,8 @@ export function SettingsManagement() {
   const [showreelUrl, setShowreelUrl] = useState("");
   const [savingShowreel, setSavingShowreel] = useState(false);
   const [uploadingShowreel, setUploadingShowreel] = useState(false);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [savingSocialLinks, setSavingSocialLinks] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const showreelInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,7 +46,7 @@ export function SettingsManagement() {
     const { data, error } = await supabase
       .from("site_settings")
       .select("*")
-      .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years", "hero_3d_model", "showreel_video_url"]);
+      .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years", "hero_3d_model", "showreel_video_url", "social_links"]);
 
     if (error) {
       toast.error("Failed to load settings");
@@ -63,6 +65,14 @@ export function SettingsManagement() {
       const showreelSetting = data.find((d: any) => d.key === "showreel_video_url");
       if (showreelSetting) {
         setShowreelUrl(showreelSetting.value);
+      }
+      const socialLinksSetting = data.find((d: any) => d.key === "social_links");
+      if (socialLinksSetting) {
+        try {
+          setSocialLinks(JSON.parse(socialLinksSetting.value));
+        } catch {
+          setSocialLinks([]);
+        }
       }
     }
     setLoading(false);
@@ -203,6 +213,26 @@ export function SettingsManagement() {
       toast.error("Failed to upload video: " + error.message);
     }
     setUploadingShowreel(false);
+  };
+
+  const handleSaveSocialLinks = async () => {
+    setSavingSocialLinks(true);
+    try {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({ 
+          key: "social_links", 
+          value: JSON.stringify(socialLinks), 
+          label: "Social Media Links",
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (error) throw error;
+      toast.success("Social media links saved successfully!");
+    } catch (error: any) {
+      toast.error("Failed to save social links: " + error.message);
+    }
+    setSavingSocialLinks(false);
   };
 
   if (loading) {
@@ -429,6 +459,35 @@ export function SettingsManagement() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Social Media Links Section */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Share2 className="w-6 h-6 text-primary" />
+            <h2 className="text-xl font-semibold">Social Media Links</h2>
+          </div>
+          <Button onClick={handleSaveSocialLinks} disabled={savingSocialLinks}>
+            {savingSocialLinks ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Links
+              </>
+            )}
+          </Button>
+        </div>
+
+        <p className="text-muted-foreground text-sm mb-6">
+          Add social media links that will be displayed in the footer of the website.
+        </p>
+
+        <SocialLinksEditor value={socialLinks} onChange={setSocialLinks} />
       </div>
     </div>
   );
