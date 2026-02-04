@@ -5,9 +5,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, GripVertical } from "lucide-react";
+import { Plus, Trash2, Edit } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
 import { GalleryUpload } from "./GalleryUpload";
+import { SortableItem } from "./SortableItem";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 type Project = {
   id: string;
@@ -29,7 +45,6 @@ export function ProjectsManagement() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<{
     title: string;
     slug: string;
@@ -55,6 +70,13 @@ export function ProjectsManagement() {
     featured: false,
     gallery_images: [],
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchProjects();
@@ -137,42 +159,31 @@ export function ProjectsManagement() {
     setShowForm(true);
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
     
-    const newProjects = [...projects];
-    const draggedItem = newProjects[draggedIndex];
-    newProjects.splice(draggedIndex, 1);
-    newProjects.splice(index, 0, draggedItem);
-    
-    setProjects(newProjects);
-    setDraggedIndex(index);
-  };
+    if (over && active.id !== over.id) {
+      const oldIndex = projects.findIndex((p) => p.id === active.id);
+      const newIndex = projects.findIndex((p) => p.id === over.id);
+      
+      const newProjects = arrayMove(projects, oldIndex, newIndex);
+      setProjects(newProjects);
 
-  const handleDragEnd = async () => {
-    if (draggedIndex === null) return;
-    
-    // Update display_order for all projects
-    const updates = projects.map((project, index) => ({
-      id: project.id,
-      display_order: index,
-    }));
+      // Update display_order for all projects
+      const updates = newProjects.map((project, index) => ({
+        id: project.id,
+        display_order: index,
+      }));
 
-    for (const update of updates) {
-      await supabase
-        .from("projects")
-        .update({ display_order: update.display_order })
-        .eq("id", update.id);
+      for (const update of updates) {
+        await supabase
+          .from("projects")
+          .update({ display_order: update.display_order })
+          .eq("id", update.id);
+      }
+
+      toast.success("Project order updated!");
     }
-
-    setDraggedIndex(null);
-    toast.success("Project order updated!");
   };
 
   return (
@@ -272,46 +283,47 @@ export function ProjectsManagement() {
         <p className="text-sm text-muted-foreground">
           Drag and drop projects to reorder them on the main page
         </p>
-        <div className="grid gap-3">
-          {projects.map((project, index) => (
-            <div
-              key={project.id}
-              draggable
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              className={`glass-card p-4 flex items-center justify-between cursor-grab active:cursor-grabbing transition-all ${
-                draggedIndex === index ? "opacity-50 scale-[0.98]" : ""
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="text-muted-foreground hover:text-foreground transition-colors">
-                  <GripVertical className="w-5 h-5" />
-                </div>
-                {project.cover_image_url && (
-                  <img src={project.cover_image_url} alt="" className="w-16 h-16 object-cover rounded" />
-                )}
-                <div>
-                  <h3 className="font-bold">{project.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {project.category} • {project.short_description?.slice(0, 50)}...
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => startEdit(project)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(project.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={projects.map((p) => p.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="grid gap-3">
+              {projects.map((project) => (
+                <SortableItem key={project.id} id={project.id}>
+                  <div className="flex items-center justify-between flex-1 ml-2">
+                    <div className="flex items-center gap-4">
+                      {project.cover_image_url && (
+                        <img src={project.cover_image_url} alt="" className="w-16 h-16 object-cover rounded" />
+                      )}
+                      <div>
+                        <h3 className="font-bold">{project.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {project.category} • {project.short_description?.slice(0, 50)}...
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => startEdit(project)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(project.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </SortableItem>
+              ))}
+              {projects.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">No projects yet. Add your first project!</p>
+              )}
             </div>
-          ))}
-          {projects.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">No projects yet. Add your first project!</p>
-          )}
-        </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );
