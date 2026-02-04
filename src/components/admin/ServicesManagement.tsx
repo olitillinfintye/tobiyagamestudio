@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, GripVertical, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableItem } from "./SortableItem";
 
 interface Service {
   id: string;
@@ -60,6 +76,13 @@ export function ServicesManagement() {
     features: [] as string[],
   });
   const [newFeature, setNewFeature] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchServices();
@@ -173,25 +196,26 @@ export function ServicesManagement() {
     });
   };
 
-  const moveService = async (index: number, direction: "up" | "down") => {
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= services.length) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const updatedServices = [...services];
-    [updatedServices[index], updatedServices[newIndex]] = [
-      updatedServices[newIndex],
-      updatedServices[index],
-    ];
+    if (over && active.id !== over.id) {
+      const oldIndex = services.findIndex((s) => s.id === active.id);
+      const newIndex = services.findIndex((s) => s.id === over.id);
 
-    // Update display orders
-    for (let i = 0; i < updatedServices.length; i++) {
-      await supabase
-        .from("services")
-        .update({ display_order: i + 1 })
-        .eq("id", updatedServices[i].id);
+      const newServices = arrayMove(services, oldIndex, newIndex);
+      setServices(newServices);
+
+      // Update display orders in database
+      for (let i = 0; i < newServices.length; i++) {
+        await supabase
+          .from("services")
+          .update({ display_order: i + 1 })
+          .eq("id", newServices[i].id);
+      }
+
+      toast.success("Order updated");
     }
-
-    fetchServices();
   };
 
   if (loading) return <p>Loading...</p>;
@@ -199,7 +223,12 @@ export function ServicesManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Services</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Services</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Drag to reorder services
+          </p>
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
@@ -311,72 +340,64 @@ export function ServicesManagement() {
         </Dialog>
       </div>
 
-      <div className="space-y-3">
-        {services.map((service, index) => (
-          <div
-            key={service.id}
-            className="glass-card p-4 flex items-center justify-between gap-4"
+      {services.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">
+          No services yet. Add your first service!
+        </p>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={services.map((s) => s.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col gap-1">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  onClick={() => moveService(index, "up")}
-                  disabled={index === 0}
+            <div className="space-y-3">
+              {services.map((service) => (
+                <SortableItem
+                  key={service.id}
+                  id={service.id}
+                  className="glass-card p-4"
                 >
-                  <GripVertical className="w-3 h-3 rotate-90" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  onClick={() => moveService(index, "down")}
-                  disabled={index === services.length - 1}
-                >
-                  <GripVertical className="w-3 h-3 rotate-90" />
-                </Button>
-              </div>
-              <div>
-                <h3 className="font-medium">{service.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">
-                  {service.description}
-                </p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {service.features?.map((f) => (
-                    <Badge key={f} variant="outline" className="text-xs">
-                      {f}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{service.title}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {service.description}
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {service.features?.map((f) => (
+                          <Badge key={f} variant="outline" className="text-xs">
+                            {f}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => handleEdit(service)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        onClick={() => handleDelete(service.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </SortableItem>
+              ))}
             </div>
-            <div className="flex gap-2">
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => handleEdit(service)}
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="destructive"
-                onClick={() => handleDelete(service.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
-
-        {services.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">
-            No services yet. Add your first service!
-          </p>
-        )}
-      </div>
+          </SortableContext>
+        </DndContext>
+      )}
     </div>
   );
 }
