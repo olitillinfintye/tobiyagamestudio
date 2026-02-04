@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Trash2, GripVertical, ExternalLink, RefreshCw, Save, X } from "lucide-react";
+import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Pencil } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
 import {
   Dialog,
@@ -14,6 +14,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableItem } from "./SortableItem";
 
 interface Partner {
   id: string;
@@ -35,6 +51,13 @@ export function PartnersManagement() {
     website_url: "",
     is_active: true,
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     fetchPartners();
@@ -146,32 +169,31 @@ export function PartnersManagement() {
     }
   };
 
-  const movePartner = async (index: number, direction: "up" | "down") => {
-    if (
-      (direction === "up" && index === 0) ||
-      (direction === "down" && index === partners.length - 1)
-    ) {
-      return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = partners.findIndex((p) => p.id === active.id);
+      const newIndex = partners.findIndex((p) => p.id === over.id);
+
+      const newPartners = arrayMove(partners, oldIndex, newIndex);
+      setPartners(newPartners);
+
+      // Update display orders in database
+      const updates = newPartners.map((p, i) => ({
+        id: p.id,
+        display_order: i,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from("partners")
+          .update({ display_order: update.display_order })
+          .eq("id", update.id);
+      }
+
+      toast.success("Order updated");
     }
-
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    const newPartners = [...partners];
-    [newPartners[index], newPartners[newIndex]] = [newPartners[newIndex], newPartners[index]];
-
-    // Update display orders
-    const updates = newPartners.map((p, i) => ({
-      id: p.id,
-      display_order: i,
-    }));
-
-    for (const update of updates) {
-      await supabase
-        .from("partners")
-        .update({ display_order: update.display_order })
-        .eq("id", update.id);
-    }
-
-    fetchPartners();
   };
 
   if (loading) {
@@ -190,7 +212,7 @@ export function PartnersManagement() {
         <div>
           <h2 className="text-xl font-semibold">Partners & Logos</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage partner logos displayed in the scrolling marquee
+            Drag to reorder partner logos in the marquee
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -268,69 +290,66 @@ export function PartnersManagement() {
           <p className="text-sm mt-1">Click "Add Partner" to get started.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {partners.map((partner, index) => (
-            <div
-              key={partner.id}
-              className={`flex items-center gap-4 p-4 rounded-lg border ${
-                partner.is_active ? "bg-background/50 border-border/50" : "bg-muted/30 border-border/30 opacity-60"
-              }`}
-            >
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => movePartner(index, "up")}
-                  disabled={index === 0}
-                  className="p-1 hover:bg-muted rounded disabled:opacity-30"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={partners.map((p) => p.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {partners.map((partner) => (
+                <SortableItem
+                  key={partner.id}
+                  id={partner.id}
+                  className={`p-4 rounded-lg border ${
+                    partner.is_active ? "bg-background/50 border-border/50" : "bg-muted/30 border-border/30 opacity-60"
+                  }`}
                 >
-                  <GripVertical className="w-4 h-4 rotate-180" />
-                </button>
-                <button
-                  onClick={() => movePartner(index, "down")}
-                  disabled={index === partners.length - 1}
-                  className="p-1 hover:bg-muted rounded disabled:opacity-30"
-                >
-                  <GripVertical className="w-4 h-4" />
-                </button>
-              </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-12 bg-muted/20 rounded flex items-center justify-center overflow-hidden">
+                      <img
+                        src={partner.logo_url}
+                        alt={partner.name}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
 
-              <div className="w-16 h-12 bg-muted/20 rounded flex items-center justify-center overflow-hidden">
-                <img
-                  src={partner.logo_url}
-                  alt={partner.name}
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate">{partner.name}</h4>
+                      {partner.website_url && (
+                        <a
+                          href={partner.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                          {partner.website_url}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
 
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium truncate">{partner.name}</h4>
-                {partner.website_url && (
-                  <a
-                    href={partner.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                  >
-                    {partner.website_url}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={partner.is_active}
-                  onCheckedChange={() => toggleActive(partner)}
-                />
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(partner)}>
-                  <Save className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(partner.id)}>
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </Button>
-              </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={partner.is_active}
+                        onCheckedChange={() => toggleActive(partner)}
+                      />
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(partner)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(partner.id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                </SortableItem>
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );
