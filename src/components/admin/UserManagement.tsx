@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -19,11 +20,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, User, Crown } from "lucide-react";
+import { Plus, Trash2, Shield, User, Crown, Pencil, Check, X, Mail, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
-type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users';
+type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services';
 
 interface AdminUser {
   id: string;
@@ -34,26 +44,35 @@ interface AdminUser {
   permissions: AdminPermission[];
 }
 
-const AVAILABLE_PERMISSIONS: { value: AdminPermission; label: string }[] = [
-  { value: 'messages', label: 'Messages' },
-  { value: 'blog', label: 'Blog' },
-  { value: 'projects', label: 'Projects' },
-  { value: 'team', label: 'Team' },
-  { value: 'awards', label: 'Awards' },
-  { value: 'settings', label: 'Settings' },
-  { value: 'analytics', label: 'Analytics' },
-  { value: 'users', label: 'Users' },
+const AVAILABLE_PERMISSIONS: { value: AdminPermission; label: string; description: string }[] = [
+  { value: 'analytics', label: 'Analytics', description: 'View site analytics and statistics' },
+  { value: 'messages', label: 'Messages', description: 'View and manage contact messages' },
+  { value: 'blog', label: 'Blog', description: 'Create, edit, and delete blog posts' },
+  { value: 'projects', label: 'Projects', description: 'Manage portfolio projects' },
+  { value: 'team', label: 'Team', description: 'Manage team members' },
+  { value: 'awards', label: 'Awards', description: 'Manage awards and achievements' },
+  { value: 'services', label: 'Services', description: 'Manage services offered' },
+  { value: 'settings', label: 'Settings', description: 'Manage site settings and partners' },
+  { value: 'users', label: 'Users', description: 'Manage admin users (Super Admin only)' },
+];
+
+const ROLE_OPTIONS = [
+  { value: 'admin', label: 'Admin', description: 'Limited permissions based on assigned roles' },
+  { value: 'super_admin', label: 'Super Admin', description: 'Full access to all features' },
 ];
 
 export default function UserManagement() {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<AdminPermission[]>([]);
-  const [makeSuperAdmin, setMakeSuperAdmin] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'super_admin'>('admin');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -64,6 +83,7 @@ export default function UserManagement() {
   const checkSuperAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      setCurrentUserId(user.id);
       const { data } = await supabase
         .from("admin_users")
         .select("is_super_admin")
@@ -127,18 +147,20 @@ export default function UserManagement() {
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
 
+      const isSuperAdminRole = selectedRole === 'super_admin';
+
       // Add to admin_users table
       const { error: adminError } = await supabase
         .from("admin_users")
         .insert({
           user_id: authData.user.id,
-          is_super_admin: makeSuperAdmin,
+          is_super_admin: isSuperAdminRole,
         });
 
       if (adminError) throw adminError;
 
       // Add permissions if not super admin
-      if (!makeSuperAdmin && selectedPermissions.length > 0) {
+      if (!isSuperAdminRole && selectedPermissions.length > 0) {
         const permissionInserts = selectedPermissions.map((permission) => ({
           user_id: authData.user!.id,
           permission,
@@ -152,11 +174,7 @@ export default function UserManagement() {
       }
 
       toast.success("Admin user created successfully!");
-      setDialogOpen(false);
-      setNewUserEmail("");
-      setNewUserPassword("");
-      setSelectedPermissions([]);
-      setMakeSuperAdmin(false);
+      resetForm();
       fetchAdminUsers();
     } catch (error: any) {
       console.error("Error creating user:", error);
@@ -166,9 +184,22 @@ export default function UserManagement() {
     }
   };
 
+  const resetForm = () => {
+    setDialogOpen(false);
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setSelectedPermissions([]);
+    setSelectedRole('admin');
+  };
+
   const handleDeleteUser = async (userId: string) => {
     if (!isSuperAdmin) {
       toast.error("Only super admins can delete users");
+      return;
+    }
+
+    if (userId === currentUserId) {
+      toast.error("You cannot delete your own account");
       return;
     }
 
@@ -197,59 +228,77 @@ export default function UserManagement() {
     }
   };
 
-  const handleTogglePermission = async (userId: string, permission: AdminPermission, hasPermission: boolean) => {
-    if (!isSuperAdmin) {
-      toast.error("Only super admins can modify permissions");
-      return;
-    }
+  const handleEditUser = (user: AdminUser) => {
+    setEditingUser(user);
+    setSelectedPermissions(user.permissions);
+    setSelectedRole(user.is_super_admin ? 'super_admin' : 'admin');
+    setEditDialogOpen(true);
+  };
 
+  const handleSaveEdit = async () => {
+    if (!editingUser || !isSuperAdmin) return;
+
+    setSubmitting(true);
     try {
-      if (hasPermission) {
-        // Remove permission
-        const { error } = await supabase
-          .from("admin_permissions")
-          .delete()
-          .eq("user_id", userId)
-          .eq("permission", permission);
+      const isSuperAdminRole = selectedRole === 'super_admin';
 
-        if (error) throw error;
-      } else {
-        // Add permission
-        const { error } = await supabase
-          .from("admin_permissions")
-          .insert({ user_id: userId, permission });
+      // Update admin_users
+      const { error: adminError } = await supabase
+        .from("admin_users")
+        .update({ is_super_admin: isSuperAdminRole })
+        .eq("user_id", editingUser.user_id);
 
-        if (error) throw error;
+      if (adminError) throw adminError;
+
+      // Delete all existing permissions
+      await supabase
+        .from("admin_permissions")
+        .delete()
+        .eq("user_id", editingUser.user_id);
+
+      // Add new permissions if not super admin
+      if (!isSuperAdminRole && selectedPermissions.length > 0) {
+        const permissionInserts = selectedPermissions.map((permission) => ({
+          user_id: editingUser.user_id,
+          permission,
+        }));
+
+        const { error: permError } = await supabase
+          .from("admin_permissions")
+          .insert(permissionInserts);
+
+        if (permError) throw permError;
       }
 
+      toast.success("User updated successfully!");
+      setEditDialogOpen(false);
+      setEditingUser(null);
       fetchAdminUsers();
-      toast.success("Permission updated");
-    } catch (error) {
-      console.error("Error updating permission:", error);
-      toast.error("Failed to update permission");
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      toast.error(error.message || "Failed to update user");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleToggleSuperAdmin = async (userId: string, currentStatus: boolean) => {
-    if (!isSuperAdmin) {
-      toast.error("Only super admins can modify admin status");
-      return;
+  const handleTogglePermission = (permission: AdminPermission) => {
+    if (selectedPermissions.includes(permission)) {
+      setSelectedPermissions(selectedPermissions.filter((p) => p !== permission));
+    } else {
+      setSelectedPermissions([...selectedPermissions, permission]);
     }
+  };
 
-    try {
-      const { error } = await supabase
-        .from("admin_users")
-        .update({ is_super_admin: !currentStatus })
-        .eq("user_id", userId);
+  const handleSelectAllPermissions = () => {
+    const allNonUserPermissions = AVAILABLE_PERMISSIONS
+      .filter(p => p.value !== 'users')
+      .map(p => p.value);
+    setSelectedPermissions(allNonUserPermissions);
+  };
 
-      if (error) throw error;
-
-      fetchAdminUsers();
-      toast.success(currentStatus ? "Super admin status removed" : "User promoted to super admin");
-    } catch (error) {
-      console.error("Error updating super admin status:", error);
-      toast.error("Failed to update admin status");
-    }
+  const handleClearAllPermissions = () => {
+    setSelectedPermissions([]);
   };
 
   if (!isSuperAdmin) {
@@ -276,7 +325,7 @@ export default function UserManagement() {
         <div>
           <h2 className="text-xl font-bold">User Management</h2>
           <p className="text-sm text-muted-foreground">
-            Manage admin users and their permissions
+            Manage admin users, roles, and permissions
           </p>
         </div>
 
@@ -287,21 +336,25 @@ export default function UserManagement() {
               Add Admin User
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Admin User</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="user@example.com"
-                  required
-                />
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -316,48 +369,116 @@ export default function UserManagement() {
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="superAdmin"
-                  checked={makeSuperAdmin}
-                  onCheckedChange={(checked) => setMakeSuperAdmin(checked as boolean)}
-                />
-                <Label htmlFor="superAdmin" className="flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-yellow-500" />
-                  Make Super Admin (all permissions)
-                </Label>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'admin' | 'super_admin')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLE_OPTIONS.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <div className="flex items-center gap-2">
+                          {role.value === 'super_admin' ? (
+                            <Crown className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <User className="w-4 h-4 text-primary" />
+                          )}
+                          <span>{role.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {ROLE_OPTIONS.find(r => r.value === selectedRole)?.description}
+                </p>
               </div>
 
-              {!makeSuperAdmin && (
-                <div className="space-y-2">
-                  <Label>Permissions</Label>
-                  <div className="grid grid-cols-2 gap-2">
+              {selectedRole !== 'super_admin' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Permissions</Label>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={handleSelectAllPermissions}>
+                        Select All
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleClearAllPermissions}>
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
                     {AVAILABLE_PERMISSIONS.filter(p => p.value !== 'users').map((perm) => (
-                      <div key={perm.value} className="flex items-center space-x-2">
+                      <div
+                        key={perm.value}
+                        className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                      >
                         <Checkbox
-                          id={perm.value}
+                          id={`create-${perm.value}`}
                           checked={selectedPermissions.includes(perm.value)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPermissions([...selectedPermissions, perm.value]);
-                            } else {
-                              setSelectedPermissions(selectedPermissions.filter((p) => p !== perm.value));
-                            }
-                          }}
+                          onCheckedChange={() => handleTogglePermission(perm.value)}
                         />
-                        <Label htmlFor={perm.value}>{perm.label}</Label>
+                        <div className="flex-1">
+                          <Label htmlFor={`create-${perm.value}`} className="cursor-pointer font-medium">
+                            {perm.label}
+                          </Label>
+                          <p className="text-xs text-muted-foreground">{perm.description}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Creating..." : "Create Admin User"}
-              </Button>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Creating..." : "Create User"}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <User className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{adminUsers.length}</p>
+              <p className="text-sm text-muted-foreground">Total Admins</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-amber-500/10">
+              <Crown className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{adminUsers.filter(u => u.is_super_admin).length}</p>
+              <p className="text-sm text-muted-foreground">Super Admins</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-secondary/10">
+              <Shield className="w-5 h-5 text-secondary-foreground" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{adminUsers.filter(u => !u.is_super_admin).length}</p>
+              <p className="text-sm text-muted-foreground">Regular Admins</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -369,71 +490,90 @@ export default function UserManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Permissions</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {adminUsers.map((admin) => (
                   <TableRow key={admin.id}>
-                    <TableCell className="font-mono text-xs max-w-[150px] truncate">
-                      {admin.user_id}
-                    </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {admin.is_super_admin ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-amber-500/20 text-amber-400">
-                            <Crown className="w-3 h-3" />
-                            Super Admin
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary/20 text-primary">
-                            <User className="w-3 h-3" />
-                            Admin
-                          </span>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          {admin.is_super_admin ? (
+                            <Crown className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <User className="w-4 h-4 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm truncate max-w-[200px]" title={admin.user_id}>
+                            {admin.user_id.slice(0, 8)}...
+                          </p>
+                          {admin.user_id === currentUserId && (
+                            <Badge variant="outline" className="text-xs">You</Badge>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       {admin.is_super_admin ? (
-                        <span className="text-muted-foreground text-sm">All permissions</span>
+                        <Badge className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Super Admin
+                        </Badge>
                       ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {AVAILABLE_PERMISSIONS.filter(p => p.value !== 'users').map((perm) => {
-                            const hasPermission = admin.permissions.includes(perm.value);
-                            return (
-                              <button
-                                key={perm.value}
-                                onClick={() => handleTogglePermission(admin.user_id, perm.value, hasPermission)}
-                                className={`px-2 py-0.5 rounded text-xs transition-colors ${
-                                  hasPermission
-                                    ? "bg-primary/20 text-primary hover:bg-primary/30"
-                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                }`}
-                              >
-                                {perm.label}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <Badge variant="secondary">
+                          <User className="w-3 h-3 mr-1" />
+                          Admin
+                        </Badge>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {admin.is_super_admin ? (
+                        <span className="text-muted-foreground text-sm italic">All permissions</span>
+                      ) : admin.permissions.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 max-w-[250px]">
+                          {admin.permissions.slice(0, 3).map((perm) => (
+                            <Badge key={perm} variant="outline" className="text-xs">
+                              {perm}
+                            </Badge>
+                          ))}
+                          {admin.permissions.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{admin.permissions.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No permissions</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        {format(new Date(admin.created_at), 'MMM d, yyyy')}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleSuperAdmin(admin.user_id, admin.is_super_admin)}
-                          title={admin.is_super_admin ? "Demote to Admin" : "Promote to Super Admin"}
+                          size="icon"
+                          onClick={() => handleEditUser(admin)}
+                          title="Edit User"
                         >
-                          <Crown className={`w-4 h-4 ${admin.is_super_admin ? "text-amber-400" : "text-muted-foreground"}`} />
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => handleDeleteUser(admin.user_id)}
+                          disabled={admin.user_id === currentUserId}
+                          title={admin.user_id === currentUserId ? "Cannot delete yourself" : "Delete User"}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
@@ -446,6 +586,98 @@ export default function UserManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">User ID</p>
+                <p className="font-mono text-sm truncate">{editingUser.user_id}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select 
+                  value={selectedRole} 
+                  onValueChange={(v) => setSelectedRole(v as 'admin' | 'super_admin')}
+                  disabled={editingUser.user_id === currentUserId}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLE_OPTIONS.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <div className="flex items-center gap-2">
+                          {role.value === 'super_admin' ? (
+                            <Crown className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <User className="w-4 h-4 text-primary" />
+                          )}
+                          <span>{role.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {editingUser.user_id === currentUserId && (
+                  <p className="text-xs text-amber-500">You cannot change your own role</p>
+                )}
+              </div>
+
+              {selectedRole !== 'super_admin' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Permissions</Label>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={handleSelectAllPermissions}>
+                        Select All
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleClearAllPermissions}>
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
+                    {AVAILABLE_PERMISSIONS.filter(p => p.value !== 'users').map((perm) => (
+                      <div
+                        key={perm.value}
+                        className="flex items-start space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                      >
+                        <Checkbox
+                          id={`edit-${perm.value}`}
+                          checked={selectedPermissions.includes(perm.value)}
+                          onCheckedChange={() => handleTogglePermission(perm.value)}
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor={`edit-${perm.value}`} className="cursor-pointer font-medium">
+                            {perm.label}
+                          </Label>
+                          <p className="text-xs text-muted-foreground">{perm.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={submitting}>
+                  {submitting ? "Saving..." : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
