@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:geo="http://www.google.com/geo/schemas/sitemap/1.0">
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
-  <!-- Homepage - Ethiopia Focus -->
+  <!-- Homepage - Global VR Company -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tobiyagamestudio.lovable.app/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tobiyagamestudio.lovable.app/"/>
     <lastmod>2026-02-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://tobiyagamestudio.lovable.app/og-image.png</image:loc>
-      <image:title>Tobiya Game Studio - Ethiopia's #1 VR &amp; Game Development</image:title>
-      <image:caption>Game development studio at Creative Hub, Piyasa, Addis Ababa, Ethiopia</image:caption>
-      <image:geo_location>Addis Ababa, Ethiopia</image:geo_location>
+      <image:title>Tobiya Game Studio - Top Virtual Reality Company</image:title>
+      <image:caption>World-class VR company and game development studio creating immersive virtual reality experiences</image:caption>
     </image:image>
   </url>
   
-  <!-- About Section -->
+  <!-- About - VR Company Info -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#about</loc>
     <lastmod>2026-02-05</lastmod>
@@ -25,7 +26,7 @@
     <priority>0.9</priority>
   </url>
   
-  <!-- Services Section -->
+  <!-- Services - VR Development Services -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#services</loc>
     <lastmod>2026-02-05</lastmod>
@@ -33,7 +34,7 @@
     <priority>0.95</priority>
   </url>
   
-  <!-- Portfolio Section -->
+  <!-- Portfolio - VR Projects -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#portfolio</loc>
     <lastmod>2026-02-05</lastmod>
@@ -41,7 +42,7 @@
     <priority>0.95</priority>
   </url>
   
-  <!-- Team Section -->
+  <!-- Team -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#team</loc>
     <lastmod>2026-02-05</lastmod>
@@ -49,7 +50,7 @@
     <priority>0.8</priority>
   </url>
   
-  <!-- Awards Section -->
+  <!-- Awards -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#awards</loc>
     <lastmod>2026-02-05</lastmod>
@@ -57,7 +58,7 @@
     <priority>0.8</priority>
   </url>
   
-  <!-- Blog Section -->
+  <!-- Blog - VR Industry Insights -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#blog</loc>
     <lastmod>2026-02-05</lastmod>
@@ -65,7 +66,7 @@
     <priority>0.85</priority>
   </url>
   
-  <!-- Contact Section - Location Important -->
+  <!-- Contact - Global VR Services -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#contact</loc>
     <lastmod>2026-02-05</lastmod>
