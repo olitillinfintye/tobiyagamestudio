@@ -1,7 +1,9 @@
 # Robots.txt for Tobiya Game Studio
+# Ethiopia's #1 Game Development Studio
+# Location: Creative Hub, Piyasa, Addis Ababa, Ethiopia
 # https://tobiyagamestudio.lovable.app
 
-# Allow all major search engine crawlers
+# Google Crawlers - Priority
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 1
@@ -9,27 +11,44 @@ Crawl-delay: 1
 User-agent: Googlebot-Image
 Allow: /
 
+User-agent: Googlebot-News
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
+# Bing Crawlers
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
+User-agent: msnbot
+Allow: /
+
+# Yahoo
 User-agent: Slurp
 Allow: /
 Crawl-delay: 1
 
+# DuckDuckGo
 User-agent: DuckDuckBot
 Allow: /
 Crawl-delay: 1
 
+# Chinese Search Engines
 User-agent: Baiduspider
 Allow: /
 Crawl-delay: 2
 
+User-agent: Sogou
+Allow: /
+
+# Russian Search Engines  
 User-agent: YandexBot
 Allow: /
 Crawl-delay: 2
 
-# Social Media Crawlers
+# Social Media Crawlers - Important for Sharing
 User-agent: Twitterbot
 Allow: /
 
@@ -48,6 +67,23 @@ Allow: /
 User-agent: TelegramBot
 Allow: /
 
+User-agent: Slackbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+# SEO Tools - Allow for analysis
+User-agent: AhrefsBot
+Allow: /
+
+User-agent: SemrushBot
+Allow: /
+
 # Allow all other bots
 User-agent: *
 Allow: /
@@ -57,6 +93,10 @@ Crawl-delay: 2
 Disallow: /admin
 Disallow: /api/
 Disallow: /*.json$
+Disallow: /private/
 
 # Sitemap location
 Sitemap: https://tobiyagamestudio.lovable.app/sitemap.xml
+
+# Host
+Host: https://tobiyagamestudio.lovable.app
