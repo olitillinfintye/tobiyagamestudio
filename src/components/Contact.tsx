@@ -34,12 +34,12 @@ const defaultContactInfo: ContactInfo[] = [
     value: "+251 922039319",
     href: "tel:+251922039319",
   },
-  {
-    icon: MapPin,
-    label: "Location",
-    value: "Mexico, Addis Ababa, Ethiopia",
-    href: null,
-  },
+   {
+     icon: MapPin,
+     label: "Location",
+     value: "Creative Hub, Piyasa, Addis Ababa, Ethiopia",
+     href: "https://maps.app.goo.gl/aFwbM2AsthHskViJ9",
+   },
   {
     icon: Globe,
     label: "Website",
@@ -203,14 +203,18 @@ export default function Contact() {
               ))}
             </div>
 
-            {/* Map Placeholder */}
-            <div className="glass-card h-48 rounded-xl overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-br from-primary/5 to-secondary flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="w-8 h-8 text-primary/50 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Mexico, Addis Ababa</p>
-                </div>
-              </div>
+            {/* Embedded Google Map */}
+            <div className="glass-card rounded-xl overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.4539329485447!2d38.75959!3d9.01234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85cecd3cdef1%3A0x1234567890ab!2sCreative%20Hub%20Piyasa!5e0!3m2!1sen!2set!4v1707139200000"
+                width="100%"
+                height="320"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="rounded-xl"
+              />
             </div>
           </motion.div>
 
