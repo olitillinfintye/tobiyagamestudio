@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -148,7 +149,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   // Simple markdown to HTML converter for preview
   const renderMarkdown = (text: string): string => {
     let html = text
-      // Escape HTML
+      // Escape HTML first
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -180,7 +181,8 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       .replace(/\n\n/g, '</p><p class="my-4">')
       .replace(/\n/g, '<br>');
     
-    return `<div class="prose prose-invert max-w-none"><p class="my-4">${html}</p></div>`;
+    const raw = `<div class="prose prose-invert max-w-none"><p class="my-4">${html}</p></div>`;
+    return DOMPurify.sanitize(raw);
   };
 
   const toolbarButtons = [

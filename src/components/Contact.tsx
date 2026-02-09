@@ -112,22 +112,25 @@ export default function Contact() {
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase
+      const { data: submission, error } = await supabase
         .from('contact_submissions')
         .insert({
           name: formData.name.trim(),
           email: formData.email.trim(),
           subject: formData.subject.trim(),
           message: formData.message.trim(),
-        });
+        })
+        .select('id')
+        .single();
       
       if (error) throw error;
       
-      // Send email notification (non-blocking)
+      // Send email notification (non-blocking) with submission ID for verification
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-notification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          submission_id: submission.id,
           name: formData.name.trim(),
           email: formData.email.trim(),
           subject: formData.subject.trim(),

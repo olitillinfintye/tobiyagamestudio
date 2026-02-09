@@ -37,12 +37,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
+    const submissionId = typeof body.submission_id === "string" ? body.submission_id.trim() : "";
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
     const email = typeof body.email === "string" ? body.email.trim().slice(0, 255) : "";
     const subject = typeof body.subject === "string" ? body.subject.trim().slice(0, 200) : "";
     const message = typeof body.message === "string" ? body.message.trim().slice(0, 5000) : "";
 
-    if (!name || !email || !subject || !message) {
+    if (!submissionId || !name || !email || !subject || !message) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -56,10 +57,23 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Fetch recipients from site_settings
+    // Verify submission exists in database (prevents abuse without a valid DB insert)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: submission, error: subError } = await supabase
+      .from("contact_submissions")
+      .select("id")
+      .eq("id", submissionId)
+      .maybeSingle();
+
+    if (subError || !submission) {
+      return new Response(JSON.stringify({ error: "Invalid submission" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     let recipients: string[] = ["oliyadtesfaye2020@gmail.com"];
 
