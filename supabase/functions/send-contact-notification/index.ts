@@ -1,11 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface ContactNotificationRequest {
@@ -35,11 +36,42 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields");
     }
 
-    const adminEmail = Deno.env.get("ADMIN_EMAIL") || "oliyadtesfaye2020@gmail.com";
-    const personalEmail = "oliyadtesfaye2020@gmail.com";
-    
-    // Build unique recipient list
-    const recipients = Array.from(new Set([adminEmail, personalEmail]));
+    // Fetch recipients from site_settings
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let recipients: string[] = ["oliyadtesfaye2020@gmail.com"];
+
+    const { data: setting } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "notification_recipients")
+      .maybeSingle();
+
+    if (setting?.value) {
+      try {
+        const parsed = JSON.parse(setting.value);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          recipients = parsed;
+        }
+      } catch {
+        // keep default
+      }
+    }
+
+    // Also include admin email setting if not already in list
+    const { data: adminSetting } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "contact_email")
+      .maybeSingle();
+
+    if (adminSetting?.value && !recipients.includes(adminSetting.value)) {
+      recipients.push(adminSetting.value);
+    }
+
+    console.log("Sending notification to:", recipients);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

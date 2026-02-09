@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Save, RefreshCw, Upload, Box, Eye, Video, Link, Share2 } from "lucide-react";
 import { ContactSettings } from "./ContactSettings";
 import { SocialLinksEditor, SocialLink } from "./SocialLinksEditor";
+import { NotificationRecipients } from "./NotificationRecipients";
 
 // Lazy load the 3D preview component
 const Model3DPreview = lazy(() => import("@/components/Model3DPreview"));
@@ -249,6 +250,9 @@ export function SettingsManagement() {
     <div className="space-y-6">
       {/* Contact Information Section */}
       <ContactSettings />
+
+      {/* Notification Recipients */}
+      <NotificationRecipients />
 
       {/* Hero Stats Section */}
       <div className="glass-card p-6">
