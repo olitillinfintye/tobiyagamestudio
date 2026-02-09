@@ -36,6 +36,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const adminEmail = Deno.env.get("ADMIN_EMAIL") || "oliyadtesfaye2020@gmail.com";
+    const personalEmail = "oliyadtesfaye2020@gmail.com";
+    
+    // Build unique recipient list
+    const recipients = Array.from(new Set([adminEmail, personalEmail]));
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -45,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Tobiya Studio <onboarding@resend.dev>",
-        to: [adminEmail],
+        to: recipients,
         subject: `New Contact: ${subject}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
