@@ -9,11 +9,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface ContactNotificationRequest {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -30,10 +36,24 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { name, email, subject, message }: ContactNotificationRequest = await req.json();
+    const body = await req.json();
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
+    const email = typeof body.email === "string" ? body.email.trim().slice(0, 255) : "";
+    const subject = typeof body.subject === "string" ? body.subject.trim().slice(0, 200) : "";
+    const message = typeof body.message === "string" ? body.message.trim().slice(0, 5000) : "";
 
     if (!name || !email || !subject || !message) {
-      throw new Error("Missing required fields");
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Fetch recipients from site_settings
@@ -82,18 +102,18 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Tobiya Studio <onboarding@resend.dev>",
         to: recipients,
-        subject: `New Contact: ${subject}`,
+        subject: `New Contact: ${escapeHtml(subject)}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #00d9ff;">New Contact Form Submission</h2>
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>From:</strong> ${name}</p>
-              <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-              <p><strong>Subject:</strong> ${subject}</p>
+              <p><strong>From:</strong> ${escapeHtml(name)}</p>
+              <p><strong>Email:</strong> <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p>
+              <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
             </div>
             <div style="background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
               <h3 style="margin-top: 0;">Message:</h3>
-              <p style="white-space: pre-wrap;">${message}</p>
+              <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
             </div>
             <p style="color: #888; font-size: 12px; margin-top: 20px;">
               This email was sent from the contact form on tobiyastudio.com
@@ -113,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error sending notification:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to send notification" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

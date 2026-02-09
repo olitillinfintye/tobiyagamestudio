@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase, Handshake } from "lucide-react";
+import { mapErrorToMessage } from "@/lib/errorMessages";
 import { Link } from "react-router-dom";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
@@ -56,11 +57,11 @@ export default function Admin() {
         password,
         options: { emailRedirectTo: window.location.origin }
       });
-      if (error) toast.error(error.message);
+      if (error) toast.error(mapErrorToMessage(error));
       else toast.success("Account created! You can now log in.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) toast.error(error.message);
+      if (error) toast.error(mapErrorToMessage(error));
       else toast.success("Logged in!");
     }
   };
