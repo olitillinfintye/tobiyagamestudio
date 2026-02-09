@@ -94,8 +94,21 @@ export default function Contact() {
     }
   };
 
+  const checkRateLimit = (): boolean => {
+    const lastSubmit = localStorage.getItem('lastContactSubmit');
+    if (lastSubmit) {
+      const timeSince = Date.now() - parseInt(lastSubmit);
+      if (timeSince < 60000) {
+        toast.error('Please wait a moment before submitting another message.');
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkRateLimit()) return;
     setIsSubmitting(true);
     
     try {
@@ -123,6 +136,7 @@ export default function Contact() {
       }).catch(console.error);
       
       toast.success("Message sent successfully! We'll get back to you soon.");
+      localStorage.setItem('lastContactSubmit', Date.now().toString());
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
       console.error('Error submitting contact form:', error);
