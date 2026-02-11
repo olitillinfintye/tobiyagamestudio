@@ -3,8 +3,8 @@ import { ChevronDown, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import heroBg from "@/assets/hero-bg.jpg";
-import VRHeadset3D from "./VRHeadset3D";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+const VRHeadset3D = lazy(() => import("./VRHeadset3D"));
 import { supabase } from "@/integrations/supabase/client";
 
 // Helper function to convert YouTube URL to embed URL
@@ -100,7 +100,7 @@ export default function Hero() {
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 md:pt-0 w-full max-w-full">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img src={heroBg} alt="" className="w-full h-full object-cover" />
+        <img src={heroBg} alt="" className="w-full h-full object-cover" fetchPriority="high" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background" />
       </div>
 
@@ -111,9 +111,11 @@ export default function Hero() {
       <div className="absolute top-1/3 left-0 md:left-1/4 w-32 md:w-96 h-32 md:h-96 bg-primary/20 rounded-full blur-3xl" />
       <div className="absolute bottom-1/3 right-0 md:right-1/4 w-24 md:w-72 h-24 md:h-72 bg-accent/10 rounded-full blur-3xl" />
 
-      {/* 3D VR Headset - Hidden on mobile */}
+      {/* 3D VR Headset - Hidden on mobile, lazy loaded */}
       <div className="hidden md:block">
-        <VRHeadset3D />
+        <Suspense fallback={null}>
+          <VRHeadset3D />
+        </Suspense>
       </div>
 
       {/* Content */}
