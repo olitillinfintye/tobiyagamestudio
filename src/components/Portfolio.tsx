@@ -2,8 +2,19 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { ExternalLink, Play, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import ProjectDetailDialog from "./ProjectDetailDialog";
+
+const getEmbedUrl = (url: string) => {
+  if (url.includes("youtube.com") || url.includes("youtu.be")) {
+    return url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/");
+  }
+  if (url.includes("vimeo.com")) {
+    return url.replace("vimeo.com/", "player.vimeo.com/video/").split("?")[0];
+  }
+  return url;
+};
 
 interface Project {
   id: string;
@@ -136,6 +147,8 @@ export default function Portfolio() {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [videoProject, setVideoProject] = useState<Project | null>(null);
+  const [videoOpen, setVideoOpen] = useState(false);
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -244,11 +257,20 @@ export default function Portfolio() {
 
                 {/* Play Button for Video */}
                 {project.video_url && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setVideoProject(project);
+                      setVideoOpen(true);
+                    }}
+                    aria-label={`Play video for ${project.title}`}
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/20"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center hover:scale-110 transition-transform">
                       <Play className="w-6 h-6 text-primary-foreground ml-1" />
                     </div>
-                  </div>
+                  </button>
                 )}
               </div>
 
@@ -300,6 +322,28 @@ export default function Portfolio() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />
+
+      {/* Video Player Dialog */}
+      <Dialog open={videoOpen} onOpenChange={(open) => { setVideoOpen(open); if (!open) setVideoProject(null); }}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">{videoProject?.title || "Project video"}</DialogTitle>
+          {videoProject?.video_url && (
+            <div className="aspect-video bg-black">
+              {videoProject.video_url.includes("youtube.com") || videoProject.video_url.includes("youtu.be") || videoProject.video_url.includes("vimeo.com") ? (
+                <iframe
+                  src={getEmbedUrl(videoProject.video_url)}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title={videoProject.title}
+                />
+              ) : (
+                <video src={videoProject.video_url} className="w-full h-full" controls autoPlay title={videoProject.title} />
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
