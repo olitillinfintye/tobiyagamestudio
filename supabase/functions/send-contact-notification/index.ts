@@ -149,6 +149,12 @@ const handler = async (req: Request): Promise<Response> => {
     const data = await res.json();
     console.log("Contact notification sent:", data);
 
+    // Mark as sent so the same submission cannot be reused to spam
+    await supabase
+      .from("contact_submissions")
+      .update({ notification_sent: true })
+      .eq("id", submissionId);
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
