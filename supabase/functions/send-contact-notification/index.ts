@@ -38,38 +38,47 @@ const handler = async (req: Request): Promise<Response> => {
 
     const body = await req.json();
     const submissionId = typeof body.submission_id === "string" ? body.submission_id.trim() : "";
-    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
-    const email = typeof body.email === "string" ? body.email.trim().slice(0, 255) : "";
-    const subject = typeof body.subject === "string" ? body.subject.trim().slice(0, 200) : "";
-    const message = typeof body.message === "string" ? body.message.trim().slice(0, 5000) : "";
 
-    if (!submissionId || !name || !email || !subject || !message) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+    if (!submissionId) {
+      return new Response(JSON.stringify({ error: "Missing submission_id" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    if (!isValidEmail(email)) {
-      return new Response(JSON.stringify({ error: "Invalid email format" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    // Verify submission exists in database (prevents abuse without a valid DB insert)
+    // Fetch the submission record from DB and use ONLY stored values (ignore request body content)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: submission, error: subError } = await supabase
       .from("contact_submissions")
-      .select("id")
+      .select("id, name, email, subject, message, notification_sent")
       .eq("id", submissionId)
       .maybeSingle();
 
     if (subError || !submission) {
       return new Response(JSON.stringify({ error: "Invalid submission" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Prevent re-sending the same notification (blocks spam abuse via repeated calls)
+    if (submission.notification_sent) {
+      return new Response(JSON.stringify({ success: true, alreadySent: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const name = String(submission.name).slice(0, 100);
+    const email = String(submission.email).slice(0, 255);
+    const subject = String(submission.subject).slice(0, 200);
+    const message = String(submission.message).slice(0, 5000);
+
+    if (!isValidEmail(email)) {
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
