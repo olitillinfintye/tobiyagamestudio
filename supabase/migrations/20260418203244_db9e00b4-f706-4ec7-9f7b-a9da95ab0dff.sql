@@ -1,0 +1,1 @@
+ALTER TABLE public.contact_submissions ADD COLUMN IF NOT EXISTS notification_sent boolean NOT NULL DEFAULT false;
