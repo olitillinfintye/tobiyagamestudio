@@ -138,6 +138,7 @@ export type Database = {
           id: string
           message: string
           name: string
+          notification_sent: boolean
           read: boolean | null
           subject: string
         }
@@ -147,6 +148,7 @@ export type Database = {
           id?: string
           message: string
           name: string
+          notification_sent?: boolean
           read?: boolean | null
           subject: string
         }
@@ -156,6 +158,7 @@ export type Database = {
           id?: string
           message?: string
           name?: string
+          notification_sent?: boolean
           read?: boolean | null
           subject?: string
         }
