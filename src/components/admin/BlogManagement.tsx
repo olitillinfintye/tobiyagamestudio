@@ -280,32 +280,34 @@ export default function BlogManagement() {
                   )}
                   
                   {/* Content */}
-                  <div className="flex-1 p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="flex-1 p-4 min-w-0">
+                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <h3 className="font-semibold text-lg truncate">{post.title}</h3>
-                          {post.published ? (
-                            <Badge variant="default" className="bg-green-500/20 text-green-500 hover:bg-green-500/30">
-                              <Eye className="w-3 h-3 mr-1" />
-                              Published
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">
-                              <EyeOff className="w-3 h-3 mr-1" />
-                              Draft
-                            </Badge>
-                          )}
-                          {post.category && (
-                            <Badge variant="outline">{post.category}</Badge>
-                          )}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-base sm:text-lg truncate" title={post.title}>{post.title}</h3>
+                          <div className="flex items-center gap-2 flex-wrap shrink-0">
+                            {post.published ? (
+                              <Badge variant="default" className="bg-green-500/20 text-green-500 hover:bg-green-500/30 text-xs">
+                                <Eye className="w-3 h-3 mr-1" />
+                                Published
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">
+                                <EyeOff className="w-3 h-3 mr-1" />
+                                Draft
+                              </Badge>
+                            )}
+                            {post.category && (
+                              <Badge variant="outline" className="text-xs">{post.category}</Badge>
+                            )}
+                          </div>
                         </div>
                         
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                           {post.excerpt || post.content.substring(0, 150)}...
                         </p>
                         
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {format(new Date(post.created_at), "MMM d, yyyy")}
@@ -316,10 +318,11 @@ export default function BlogManagement() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 lg:pt-1">
                         <Button
                           variant="outline"
                           size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() =>
                             togglePublishMutation.mutate({
                               id: post.id,
@@ -337,6 +340,7 @@ export default function BlogManagement() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() => handleEdit(post)}
                           title="Edit"
                         >
@@ -345,6 +349,7 @@ export default function BlogManagement() {
                         <Button
                           variant="destructive"
                           size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() => deleteMutation.mutate(post.id)}
                           title="Delete"
                         >
