@@ -7,16 +7,28 @@ import { supabase } from "@/integrations/supabase/client";
 function VRHeadsetModel({ modelUrl }: { modelUrl: string }) {
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF(modelUrl);
+  const mouse = useRef({ x: 0, y: 0 });
 
-  useFrame((state) => {
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.2;
-      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.1;
+      const targetY = mouse.current.x * 0.6;
+      const targetX = -mouse.current.y * 0.4;
+      groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * 0.08;
+      groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.08;
     }
   });
 
   return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
+    <Float speed={2} rotationIntensity={0.2} floatIntensity={1}>
       <group ref={groupRef} scale={2.5} position={[0, -0.5, 0]}>
         <primitive object={scene} />
       </group>
