@@ -28,14 +28,13 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: 📂 Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: 📂 Deploy to SFTP
+        uses: appleboy/scp-action@v1
         with:
-          server: ftp.tobiyastudio.com
+          host: ftp.tobiyastudio.com
           username: lovable@tobiyastudio.com
           password: ${{ secrets.ftp_password }}
-          protocol: sftp
           port: 22
-          timeout: 60000
-          local-dir: ./dist/
-          server-dir: /
+          source: "./dist/*"
+          target: "/"
+          strip_components: 1
