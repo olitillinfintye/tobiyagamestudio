@@ -35,5 +35,7 @@ jobs:
           username: lovable@tobiyastudio.com
           password: ${{ secrets.ftp_password }}
           protocol: ftps
+          port: 21
+          timeout: 60000
           local-dir: ./dist/
           server-dir: /
