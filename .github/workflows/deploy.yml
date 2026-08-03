@@ -1,14 +1,28 @@
-# This workflow builds and deploys the website via SFTP on every push to main
-name: SFTP Deploy
+# Builds the site and deploys it over FTPS on every push to main.
+#
+# NOTE ON PROTOCOL: this previously used appleboy/scp-action, which is SCP over
+# SSH on port 22. The host does not run SSH — a port probe of ftp.tobiyastudio.com
+# returns ECONNREFUSED on 22, while port 21 answers with
+# "220 Welcome to Pure-FTPd [privsep] [TLS]". So the server speaks FTP/FTPS only,
+# and the username format (lovable@tobiyastudio.com) is the cPanel FTP-account
+# convention rather than an SSH login. This workflow therefore uses FTPS on 21.
+name: Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
+
+# Never let two deploys write to the same directory at once.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     name: 🚀 Build and Deploy
     runs-on: ubuntu-latest
+
     steps:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
@@ -16,11 +30,24 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
+      # npm ci respects package-lock.json exactly, so CI builds match local ones.
       - name: 📥 Install dependencies
-        run: npm install
+        run: npm ci
+
+      # Vite inlines VITE_* at build time and the Supabase client has no fallback:
+      # createClient(undefined, undefined) throws "supabaseUrl is required" at module
+      # load. A missing secret would therefore produce a build that passes CI and
+      # then white-screens in production, so fail here instead.
+      - name: 🔐 Check required secrets
+        run: |
+          missing=0
+          [ -n "${{ secrets.VITE_SUPABASE_URL }}" ] || { echo "::error::Secret VITE_SUPABASE_URL is not set"; missing=1; }
+          [ -n "${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" ] || { echo "::error::Secret VITE_SUPABASE_PUBLISHABLE_KEY is not set"; missing=1; }
+          [ -n "${{ secrets.ftp_password }}" ] || { echo "::error::Secret ftp_password is not set"; missing=1; }
+          exit $missing
 
       - name: 🔨 Build project
         run: npm run build
@@ -28,13 +55,33 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: 📂 Deploy to SFTP
-        uses: appleboy/scp-action@v1
+      # Fail loudly here rather than silently publishing a broken tree.
+      # .htaccess drives SPA routing for /admin and /blog/:slug — without it
+      # those deep links 404 on Apache.
+      - name: ✅ Verify build output
+        run: |
+          test -f dist/index.html || { echo "::error::dist/index.html missing"; exit 1; }
+          test -f dist/.htaccess  || { echo "::error::dist/.htaccess missing — SPA deep links will 404"; exit 1; }
+          echo "Build output:"
+          ls -la dist/
+
+      - name: 📂 Deploy via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          host: ftp.tobiyastudio.com
+          server: ftp.tobiyastudio.com
           username: lovable@tobiyastudio.com
           password: ${{ secrets.ftp_password }}
-          port: 22
-          source: "./dist/*"
-          target: "/"
-          strip_components: 1
+          protocol: ftps
+          port: 21
+          # Trailing slashes are required by this action.
+          local-dir: ./dist/
+          # The cPanel FTP account is scoped to /home/tobiya.../public_html, so it
+          # lands directly in the web root on login. './' is correct here —
+          # './public_html/' would nest a second public_html inside it.
+          server-dir: ./
+          # Keep the upload lean and avoid clobbering server-side files.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.DS_Store
