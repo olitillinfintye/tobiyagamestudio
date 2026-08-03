@@ -1,27 +1,43 @@
-# Builds the site and deploys it over FTPS on every push to main.
+# Builds the site and publishes the built output to the `deploy` branch.
+# The cPanel server then PULLS that branch — see docs/DEPLOYMENT.md.
 #
-# NOTE ON PROTOCOL: this previously used appleboy/scp-action, which is SCP over
-# SSH on port 22. The host does not run SSH — a port probe of ftp.tobiyastudio.com
-# returns ECONNREFUSED on 22, while port 21 answers with
-# "220 Welcome to Pure-FTPd [privsep] [TLS]". So the server speaks FTP/FTPS only,
-# and the username format (lovable@tobiyastudio.com) is the cPanel FTP-account
-# convention rather than an SSH login. This workflow therefore uses FTPS on 21.
-name: Deploy
+# WHY PULL INSTEAD OF PUSH
+# Two push-based attempts failed against this host:
+#   - appleboy/scp-action (SCP over SSH, port 22) -> "connection refused".
+#     The host runs no SSH at all.
+#   - FTP-Deploy-Action (FTPS, port 21) -> "Timeout (control socket)".
+#     Port 21 answers instantly from a normal connection but is dropped for
+#     GitHub's runners, i.e. the host firewall (Hetzner/cPanel, typically CSF)
+#     filters it by source IP.
+# Outbound connections FROM the server are not filtered, so having cPanel pull
+# from GitHub sidesteps the firewall entirely.
+name: Build and Publish
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
 
-# Never let two deploys write to the same directory at once.
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
-    name: 🚀 Build and Deploy
+  build-and-publish:
+    name: 🚀 Build and Publish
     runs-on: ubuntu-latest
+
+    # Required to push the built output to the deploy branch.
+    permissions:
+      contents: write
+
+    # Surfaced as env because the `secrets` context is NOT available in a
+    # step-level `if:` — checking secrets.* there silently evaluates empty.
+    env:
+      CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+      CPANEL_USER: ${{ secrets.CPANEL_USER }}
+      CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+      CPANEL_REPO_ROOT: ${{ secrets.CPANEL_REPO_ROOT }}
 
     steps:
       - name: 🚚 Get latest code
@@ -46,7 +62,6 @@ jobs:
           missing=0
           [ -n "${{ secrets.VITE_SUPABASE_URL }}" ] || { echo "::error::Secret VITE_SUPABASE_URL is not set"; missing=1; }
           [ -n "${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" ] || { echo "::error::Secret VITE_SUPABASE_PUBLISHABLE_KEY is not set"; missing=1; }
-          [ -n "${{ secrets.ftp_password }}" ] || { echo "::error::Secret ftp_password is not set"; missing=1; }
           exit $missing
 
       - name: 🔨 Build project
@@ -55,7 +70,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      # Fail loudly here rather than silently publishing a broken tree.
+      # Fail loudly here rather than publishing a broken tree.
       # .htaccess drives SPA routing for /admin and /blog/:slug — without it
       # those deep links 404 on Apache.
       - name: ✅ Verify build output
@@ -65,23 +80,57 @@ jobs:
           echo "Build output:"
           ls -la dist/
 
-      - name: 📂 Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ftp.tobiyastudio.com
-          username: lovable@tobiyastudio.com
-          password: ${{ secrets.ftp_password }}
-          protocol: ftps
-          port: 21
-          # Trailing slashes are required by this action.
-          local-dir: ./dist/
-          # The cPanel FTP account is scoped to /home/tobiya.../public_html, so it
-          # lands directly in the web root on login. './' is correct here —
-          # './public_html/' would nest a second public_html inside it.
-          server-dir: ./
-          # Keep the upload lean and avoid clobbering server-side files.
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/.DS_Store
+      # Force-pushed orphan branch: it holds only the built site plus .cpanel.yml,
+      # with no source history, so it stays small no matter how often we deploy.
+      - name: 📤 Publish built site to `deploy` branch
+        run: |
+          set -euo pipefail
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          rm -rf .publish
+          mkdir -p .publish/dist
+          cp -R dist/. .publish/dist/
+          cp .cpanel.yml .publish/.cpanel.yml
+
+          cd .publish
+          git init -q
+          git checkout -q -b deploy
+          git add -A
+          git commit -q -m "Build from ${GITHUB_SHA::7} ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push -f \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            deploy
+          echo "Published $(find dist -type f | wc -l) files to the deploy branch."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Optional immediate trigger. Only runs if you add the CPANEL_* secrets;
+      # otherwise the server-side cron in docs/DEPLOYMENT.md picks the build up.
+      # Soft-fails so a blocked port 2083 cannot fail an otherwise good build.
+      - name: 🔔 Trigger cPanel deployment (optional)
+        if: env.CPANEL_USER != '' && env.CPANEL_API_TOKEN != ''
+        continue-on-error: true
+        run: |
+          host="${CPANEL_HOST:-tobiyastudio.com}"
+          root="${CPANEL_REPO_ROOT:-repositories/tobiyagamestudio}"
+          echo "Asking cPanel at $host to pull and deploy $root ..."
+          curl -sS --max-time 90 --fail-with-body \
+            -H "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+            "https://${host}:2083/execute/VersionControlDeployment/create?repository_root=${root}" \
+            || echo "::warning::cPanel trigger failed (port 2083 may be firewalled). The cron job will pick this build up instead."
+
+      # Diagnostic only — records whether the firewall situation ever changes.
+      - name: 🩺 Connectivity report (informational)
+        continue-on-error: true
+        run: |
+          echo "Runner egress IP: $(curl -s --max-time 10 https://api.ipify.org || echo unknown)"
+          echo "Port reachability from this runner:"
+          echo "  21 = FTP/FTPS   22 = SSH   2083 = cPanel   2087 = WHM"
+          for port in 21 22 443 2083 2087; do
+            if timeout 12 bash -c "</dev/tcp/ftp.tobiyastudio.com/$port" 2>/dev/null; then
+              echo "  port $port: OPEN"
+            else
+              echo "  port $port: REFUSED or FILTERED"
+            fi
+          done
