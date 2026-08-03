@@ -1,10 +1,13 @@
-import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
-import { ExternalLink, Play, Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { Play, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import ProjectDetailDialog from "./ProjectDetailDialog";
+import { SectionHeader } from "./SectionHeader";
+import { CardSkeleton, LoadingAnnouncer, SectionNotice } from "./CardSkeleton";
+import { cn } from "@/lib/utils";
 
 const getEmbedUrl = (url: string) => {
   if (url.includes("youtube.com") || url.includes("youtu.be")) {
@@ -14,6 +17,19 @@ const getEmbedUrl = (url: string) => {
     return url.replace("vimeo.com/", "player.vimeo.com/video/").split("?")[0];
   }
   return url;
+};
+
+/**
+ * Tool lists arrive from the CMS inconsistently — sometimes as separate entries
+ * ("Unity", "Meta XR SDK"), sometimes as one delimited string
+ * ("Unity - MetaSDK - Convai"). Normalise both into individual tags.
+ */
+const normaliseTools = (tools: string[] | null): string[] => {
+  if (!tools) return [];
+  return tools
+    .flatMap((tool) => tool.split(/\s*[-–—|/]\s*/))
+    .map((tool) => tool.trim())
+    .filter(Boolean);
 };
 
 interface Project {
@@ -39,297 +55,237 @@ const categories = [
   { id: "award", label: "Awards" },
 ];
 
-// Default projects data for initial display
-const defaultProjects: Project[] = [
-  {
-    id: "1",
-    title: "VR Educational Game for Co(X)ist",
-    slug: "vr-educational-coexist",
-    category: "vr",
-    short_description: "An immersive VR educational experience designed to teach complex concepts through interactive gameplay.",
-    cover_image_url: "https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=800",
-    video_url: null,
-    tools_used: ["Unity", "Oculus SDK", "Blender"],
-    project_link: null,
-    featured: true,
-  },
-  {
-    id: "2",
-    title: "Immersive Concert VR",
-    slug: "immersive-concert-vr",
-    category: "vr",
-    short_description: "A groundbreaking VR concert experience that brings live performances to users anywhere in the world.",
-    cover_image_url: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800",
-    video_url: null,
-    tools_used: ["Unity", "VR Audio", "Motion Capture"],
-    project_link: null,
-    featured: true,
-  },
-  {
-    id: "3",
-    title: "VR Tour Guide AI - Ethiopian",
-    slug: "vr-tour-guide-ai",
-    category: "vr",
-    short_description: "AI-powered virtual tour guide showcasing Ethiopian cultural heritage and historical sites.",
-    cover_image_url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-    video_url: null,
-    tools_used: ["Unity", "OpenAI", "WebXR"],
-    project_link: null,
-    featured: true,
-  },
-  {
-    id: "4",
-    title: "Educational AR Game",
-    slug: "educational-ar-game",
-    category: "ar",
-    short_description: "Augmented reality educational game that brings learning to life through interactive 3D models.",
-    cover_image_url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800",
-    video_url: null,
-    tools_used: ["Unity", "ARCore", "ARKit"],
-    project_link: null,
-    featured: false,
-  },
-  {
-    id: "5",
-    title: "Interactive Floor - Techno",
-    slug: "interactive-floor-techno",
-    category: "interactive",
-    short_description: "Interactive floor installation for Techno events, creating immersive visual experiences.",
-    cover_image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
-    video_url: null,
-    tools_used: ["Unity", "Kinect", "Projection Mapping"],
-    project_link: null,
-    featured: false,
-  },
-  {
-    id: "6",
-    title: "Wall Game for Heineken",
-    slug: "wall-game-heineken",
-    category: "interactive",
-    short_description: "Interactive wall game installation for Heineken brand activation events.",
-    cover_image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800",
-    video_url: null,
-    tools_used: ["Unity", "Touch Sensors", "LED Display"],
-    project_link: null,
-    featured: false,
-  },
-  {
-    id: "7",
-    title: "1st Place - Cyber Game Jam",
-    slug: "cyber-game-jam-winner",
-    category: "award",
-    short_description: "Won first place at the Cyber Game Jam competition with our innovative VR game concept.",
-    cover_image_url: "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800",
-    video_url: null,
-    tools_used: null,
-    project_link: null,
-    featured: true,
-  },
-  {
-    id: "8",
-    title: "3rd Place - Fak'ugesi Festival",
-    slug: "fakugesi-festival-award",
-    category: "award",
-    short_description: "Earned 3rd place and 'Rising Star' title in XR category at Fak'ugesi Festival, South Africa.",
-    cover_image_url: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800",
-    video_url: null,
-    tools_used: null,
-    project_link: null,
-    featured: true,
-  },
-];
-
 export default function Portfolio() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [activeCategory, setActiveCategory] = useState("all");
-  const [projects, setProjects] = useState<Project[]>(defaultProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [videoProject, setVideoProject] = useState<Project | null>(null);
   const [videoOpen, setVideoOpen] = useState(false);
+
   useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .order("display_order", { ascending: true });
+
+        if (error) throw error;
+        setProjects(data ?? []);
+      } catch (error) {
+        // Surface the failure rather than silently rendering placeholder data.
+        console.error("Failed to load projects:", error);
+        setLoadError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProjects();
   }, []);
 
-  const fetchProjects = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .order("display_order", { ascending: true });
-
-      if (error) throw error;
-      if (data && data.length > 0) {
-        setProjects(data);
-      }
-    } catch (error) {
-      console.log("Using default projects");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProjects = activeCategory === "all"
-    ? projects
-    : projects.filter((p) => p.category === activeCategory);
+  const filteredProjects =
+    activeCategory === "all" ? projects : projects.filter((p) => p.category === activeCategory);
 
   return (
-    <section id="works" className="section-padding relative" ref={ref}>
-      {/* Background */}
+    <section id="works" aria-labelledby="works-heading" className="section-padding relative">
       <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      
-      <div className="container mx-auto px-4 relative">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <span className="inline-block px-4 py-2 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
-            Portfolio
-          </span>
-          <h2 className="font-display text-3xl md:text-5xl font-bold mb-6">
-            Our <span className="gradient-text">Works</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Explore our portfolio of VR, AR, and interactive experiences that push the boundaries of what's possible.
-          </p>
-        </motion.div>
 
-        {/* Category Filter */}
+      <div className="container mx-auto px-4 relative">
+        <SectionHeader
+          id="works-heading"
+          eyebrow="Portfolio"
+          title={
+            <>
+              Our <span className="gradient-text">Works</span>
+            </>
+          }
+          description="Explore our portfolio of VR, AR, and interactive experiences that push the boundaries of what's possible."
+        />
+
+        {/* Category filter */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12 px-2"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          role="group"
+          aria-label="Filter projects by category"
+          className="flex flex-wrap justify-center gap-2 md:gap-3 mb-10 md:mb-12"
         >
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setActiveCategory(category.id)}
-              className={`px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-300 ${
-                activeCategory === category.id
-                  ? "bg-primary text-primary-foreground glow-primary"
-                  : "bg-card border border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
+          {categories.map((category) => {
+            const isActive = activeCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setActiveCategory(category.id)}
+                aria-pressed={isActive}
+                className={cn(
+                  "min-h-[44px] rounded-full px-5 text-sm font-medium transition-all duration-300 focus-ring",
+                  isActive
+                    ? "bg-primary text-primary-foreground glow-primary"
+                    : "bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                )}
+              >
+                {category.label}
+              </button>
+            );
+          })}
         </motion.div>
 
-        {/* Projects Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-          {filteredProjects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.1 * index }}
-              className="glass-card overflow-hidden group project-card"
-            >
-              {/* Image */}
-              <div className="relative h-32 sm:h-48 overflow-hidden">
-                {project.cover_image_url ? (
-                  <img
-                    src={project.cover_image_url}
-                    alt={project.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary flex items-center justify-center">
-                    <span className="text-2xl font-display text-primary/50">{project.title[0]}</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-                
-                {/* Category Badge */}
-                <div className="absolute top-4 left-4">
-                  <span className={`category-pill ${project.category}`}>
-                    {project.category}
-                  </span>
-                </div>
+        {loading && (
+          <>
+            <LoadingAnnouncer label="Loading projects" />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          </>
+        )}
 
-                {/* Play Button for Video */}
-                {project.video_url && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setVideoProject(project);
-                      setVideoOpen(true);
-                    }}
-                    aria-label={`Play video for ${project.title}`}
-                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/20"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center hover:scale-110 transition-transform">
-                      <Play className="w-6 h-6 text-primary-foreground ml-1" />
-                    </div>
-                  </button>
-                )}
-              </div>
+        {!loading && loadError && (
+          <SectionNotice
+            title="Our work is taking a moment to load"
+            description="Please refresh the page, or reach out and we'll send our portfolio directly."
+          />
+        )}
 
-              {/* Content */}
-              <div className="p-3 md:p-6">
-                <h3 className="font-display text-sm md:text-lg font-bold mb-1 md:mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                  {project.title}
-                </h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-4 line-clamp-2">
-                  {project.short_description}
-                </p>
+        {!loading && !loadError && filteredProjects.length === 0 && (
+          <SectionNotice
+            title="Nothing here yet"
+            description={
+              activeCategory === "all"
+                ? "New projects are on the way."
+                : "No projects in this category yet — try another filter."
+            }
+          />
+        )}
 
-                {/* Tools - Hidden on mobile */}
-                {project.tools_used && project.tools_used.length > 0 && (
-                  <div className="hidden md:flex flex-wrap gap-2 mb-4">
-                    {project.tools_used.slice(0, 3).map((tool) => (
-                      <span
-                        key={tool}
-                        className="px-2 py-1 rounded text-xs bg-muted text-muted-foreground"
-                      >
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* View More Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setDialogOpen(true);
-                  }}
-                  className="w-full mt-1 md:mt-2 text-xs md:text-sm py-1 md:py-2"
+        {!loading && !loadError && filteredProjects.length > 0 && (
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredProjects.map((project, index) => (
+                <motion.li
+                  key={project.id}
+                  layout
+                  initial={{ opacity: 0, y: 32 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.4, delay: Math.min(0.06 * index, 0.3) }}
+                  className="glass-card flex flex-col overflow-hidden group project-card"
                 >
-                  <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                  View More
-                </Button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  {/* Consistent 16:10 media plate. The ring keeps renders that
+                      ship with their own background reading as intentional. */}
+                  <div className="relative aspect-[16/10] overflow-hidden ring-1 ring-inset ring-border/60">
+                    {project.cover_image_url ? (
+                      <img
+                        src={project.cover_image_url}
+                        alt=""
+                        width={800}
+                        height={500}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary flex items-center justify-center">
+                        <span className="text-3xl font-display text-primary/50" aria-hidden="true">
+                          {project.title[0]}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card/90 to-transparent" />
+
+                    <div className="absolute top-3 left-3">
+                      <span className={`category-pill ${project.category}`}>{project.category}</span>
+                    </div>
+
+                    {project.video_url && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoProject(project);
+                          setVideoOpen(true);
+                        }}
+                        aria-label={`Play video for ${project.title}`}
+                        className="absolute inset-0 flex items-center justify-center bg-background/30 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-ring"
+                      >
+                        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/90 transition-transform hover:scale-110">
+                          <Play className="w-6 h-6 text-primary-foreground ml-1" aria-hidden="true" />
+                        </span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-4 md:p-5">
+                    <h3 className="font-display text-base md:text-lg font-bold mb-2 line-clamp-2 transition-colors group-hover:text-primary">
+                      {project.title}
+                    </h3>
+
+                    {project.short_description && (
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2 text-pretty">
+                        {project.short_description}
+                      </p>
+                    )}
+
+                    {normaliseTools(project.tools_used).length > 0 && (
+                      <ul className="mb-4 flex flex-wrap gap-1.5">
+                        {normaliseTools(project.tools_used)
+                          .slice(0, 4)
+                          .map((tool) => (
+                            <li
+                              key={tool}
+                              className="rounded border border-border/60 bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                            >
+                              {tool}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedProject(project);
+                        setDialogOpen(true);
+                      }}
+                      className="mt-auto min-h-[44px] w-full"
+                    >
+                      <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                      View details
+                      <span className="sr-only"> for {project.title}</span>
+                    </Button>
+                  </div>
+                </motion.li>
+              ))}
+            </AnimatePresence>
+          </ul>
+        )}
       </div>
 
-      {/* Project Detail Dialog */}
-      <ProjectDetailDialog
-        project={selectedProject}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
+      <ProjectDetailDialog project={selectedProject} open={dialogOpen} onOpenChange={setDialogOpen} />
 
-      {/* Video Player Dialog */}
-      <Dialog open={videoOpen} onOpenChange={(open) => { setVideoOpen(open); if (!open) setVideoProject(null); }}>
+      <Dialog
+        open={videoOpen}
+        onOpenChange={(open) => {
+          setVideoOpen(open);
+          if (!open) setVideoProject(null);
+        }}
+      >
         <DialogContent className="max-w-4xl p-0 overflow-hidden">
           <DialogTitle className="sr-only">{videoProject?.title || "Project video"}</DialogTitle>
           {videoProject?.video_url && (
-            <div className="aspect-video bg-black">
-              {videoProject.video_url.includes("youtube.com") || videoProject.video_url.includes("youtu.be") || videoProject.video_url.includes("vimeo.com") ? (
+            <div className="aspect-video bg-background">
+              {videoProject.video_url.includes("youtube.com") ||
+              videoProject.video_url.includes("youtu.be") ||
+              videoProject.video_url.includes("vimeo.com") ? (
                 <iframe
                   src={getEmbedUrl(videoProject.video_url)}
                   className="w-full h-full"
@@ -338,7 +294,13 @@ export default function Portfolio() {
                   title={videoProject.title}
                 />
               ) : (
-                <video src={videoProject.video_url} className="w-full h-full" controls autoPlay title={videoProject.title} />
+                <video
+                  src={videoProject.video_url}
+                  className="w-full h-full"
+                  controls
+                  autoPlay
+                  title={videoProject.title}
+                />
               )}
             </div>
           )}

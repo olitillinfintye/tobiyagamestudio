@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Eyebrow } from "@/components/ui/eyebrow";
 
 interface Partner {
   id: string;
@@ -49,7 +50,11 @@ export default function Partners() {
   const duration = partners.length * 2.5; // Adjust speed here
 
   return (
-    <section id="partners" className="py-12 md:py-16 relative overflow-hidden bg-secondary/20">
+    <section
+      id="partners"
+      aria-labelledby="partners-heading"
+      className="py-12 md:py-16 relative overflow-hidden bg-secondary/20"
+    >
       <div className="container mx-auto px-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -58,10 +63,8 @@ export default function Partners() {
           transition={{ duration: 0.6 }}
           className="text-center mb-8"
         >
-          <span className="inline-block px-4 py-2 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
-            Trusted By
-          </span>
-          <h2 className="font-display text-2xl md:text-3xl font-bold">
+          <Eyebrow className="mb-4">Trusted By</Eyebrow>
+          <h2 id="partners-heading" className="font-display text-display-md font-bold">
             Our <span className="gradient-text">Partners</span>
           </h2>
         </motion.div>
@@ -95,27 +98,60 @@ export default function Partners() {
             }}
             style={{ width: "fit-content" }}
           >
-            {duplicatedPartners.map((partner, index) => (
-              <motion.a
-                key={`${partner.id}-${index}`}
-                href={partner.website_url || "#"}
-                target={partner.website_url ? "_blank" : undefined}
-                rel="noopener noreferrer"
-                className="flex-shrink-0 mx-6 md:mx-10"
-                title={partner.name}
-                whileHover={{ scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <div className="w-24 h-16 md:w-32 md:h-20 flex items-center justify-center grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300">
+            {duplicatedPartners.map((partner, index) => {
+              // The list is duplicated for a seamless loop; the second copy is
+              // hidden from assistive tech so logos are not announced twice.
+              const isClone = index >= partners.length;
+
+              const logo = (
+                <div className="w-24 h-16 md:w-32 md:h-20 flex items-center justify-center grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-300">
                   <img
                     src={partner.logo_url}
-                    alt={partner.name}
-                    className="max-w-full max-h-full object-contain"
+                    alt=""
+                    width={128}
+                    height={80}
                     loading="lazy"
+                    decoding="async"
+                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
-              </motion.a>
-            ))}
+              );
+
+              // Without a website there is nothing to link to — render a plain
+              // element rather than an href="#" that goes nowhere.
+              if (!partner.website_url) {
+                return (
+                  <motion.div
+                    key={`${partner.id}-${index}`}
+                    className="flex-shrink-0 mx-6 md:mx-10"
+                    aria-hidden={isClone || undefined}
+                    title={partner.name}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    {logo}
+                    {!isClone && <span className="sr-only">{partner.name}</span>}
+                  </motion.div>
+                );
+              }
+
+              return (
+                <motion.a
+                  key={`${partner.id}-${index}`}
+                  href={partner.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 mx-6 md:mx-10 rounded-md focus-ring"
+                  aria-label={`${partner.name} (opens in a new tab)`}
+                  aria-hidden={isClone || undefined}
+                  tabIndex={isClone ? -1 : undefined}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  {logo}
+                </motion.a>
+              );
+            })}
           </motion.div>
         </div>
       </div>

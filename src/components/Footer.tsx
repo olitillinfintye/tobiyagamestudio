@@ -1,8 +1,22 @@
 import { Link } from "react-router-dom";
-import { Heart, Linkedin, Twitter, Facebook, Instagram, Youtube, Github, Send, MessageCircle, Music, Globe, Mail, Link as LinkIcon } from "lucide-react";
+import {
+  Heart,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Instagram,
+  Youtube,
+  Github,
+  Send,
+  MessageCircle,
+  Music,
+  Globe,
+  Mail,
+  Link as LinkIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import tobiyaLogo from "@/assets/tobiya-logo-white.png";
+import { BrandLogo } from "./BrandLogo";
 
 interface SocialLink {
   platform: string;
@@ -11,20 +25,20 @@ interface SocialLink {
 }
 
 const footerLinks = {
-  company: [
+  Company: [
     { name: "About Us", href: "/#about" },
     { name: "Our Team", href: "/#team" },
-    { name: "Careers", href: "/#contact" },
+    { name: "Awards", href: "/#awards" },
   ],
-  services: [
+  Services: [
     { name: "Game Development", href: "/#services" },
     { name: "AR/VR Apps", href: "/#services" },
     { name: "Interactive Design", href: "/#services" },
   ],
-  portfolio: [
-    { name: "VR Projects", href: "/#works" },
-    { name: "AR Projects", href: "/#works" },
-    { name: "Awards", href: "/#works" },
+  Work: [
+    { name: "All Projects", href: "/#works" },
+    { name: "Latest News", href: "/#blog" },
+    { name: "Start a Project", href: "/#contact" },
   ],
 };
 
@@ -41,7 +55,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Globe,
   Mail,
   Link: LinkIcon,
-  Palette: Globe, // Fallback for Behance
+  Palette: Globe,
 };
 
 export default function Footer() {
@@ -54,139 +68,105 @@ export default function Footer() {
         .select("value")
         .eq("key", "social_links")
         .maybeSingle();
-      
-      if (data?.value) {
-        try {
-          setSocialLinks(JSON.parse(data.value));
-        } catch {
-          setSocialLinks([]);
-        }
+
+      if (!data?.value) return;
+
+      try {
+        setSocialLinks(JSON.parse(data.value));
+      } catch {
+        setSocialLinks([]);
       }
     };
+
     fetchSocialLinks();
   }, []);
 
-  const handleNavClick = (href: string, e: React.MouseEvent) => {
-    if (href.startsWith("/#")) {
-      e.preventDefault();
-      const sectionId = href.replace("/#", "");
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
-    }
-  };
-
-  const renderSocialIcon = (iconName: string) => {
-    const IconComponent = iconMap[iconName] || LinkIcon;
-    return <IconComponent className="w-5 h-5" />;
-  };
-
   return (
-    <footer className="bg-card border-t border-border/50 pt-12 md:pt-16 pb-8">
+    <footer className="bg-card border-t border-border pt-14 md:pt-16 pb-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12 mb-8 md:mb-12">
-          {/* Brand */}
-          <div className="col-span-2 lg:col-span-2">
-            <Link to="/" className="inline-block mb-4">
-              <img src={tobiyaLogo} alt="Tobiya Studio" className="h-16 md:h-20 w-auto" />
+        {/* 2fr brand column with no max-width cap, so the grid does not leave
+            a large dead gutter before the first link column. */}
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-12 mb-12">
+          <div>
+            <Link
+              to="/"
+              className="mb-4 inline-block rounded-md focus-ring"
+              aria-label="Tobiya Game Studio — home"
+            >
+              {/* Theme-aware: this was previously hardcoded to the white mark,
+                  which made it invisible on the light-mode surface. */}
+              <BrandLogo className="h-14 md:h-16" />
             </Link>
-            <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6 max-w-sm">
-              We create interactive worlds that inspire exploration, foster connection, and redefine the boundaries of play.
+
+            <p className="mb-4 max-w-md text-sm md:text-base text-muted-foreground text-pretty">
+              We create interactive worlds that inspire exploration, foster connection, and redefine
+              the boundaries of play.
             </p>
-            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-4">
+
+            <p className="mb-5 flex items-center gap-1.5 text-sm text-muted-foreground">
               <span>Built with</span>
-              <Heart className="w-3 h-3 md:w-4 md:h-4 text-destructive fill-destructive" />
+              <Heart className="h-4 w-4 fill-destructive text-destructive" aria-hidden="true" />
               <span>in Ethiopia</span>
-            </div>
-            
-            {/* Social Media Icons */}
+            </p>
+
             {socialLinks.length > 0 && (
-              <div className="flex items-center gap-3">
-                {socialLinks.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                    aria-label={link.platform}
-                  >
-                    {renderSocialIcon(link.icon)}
-                  </a>
-                ))}
-              </div>
+              <ul className="flex items-center gap-2">
+                {socialLinks.map((link, index) => {
+                  const IconComponent = iconMap[link.icon] || LinkIcon;
+                  return (
+                    <li key={`${link.platform}-${index}`}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Tobiya Game Studio on ${link.platform}`}
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary transition-all duration-300 hover:bg-primary hover:text-primary-foreground focus-ring"
+                      >
+                        <IconComponent className="h-5 w-5" />
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
 
-          {/* Company Links */}
-          <div>
-            <h4 className="font-display font-bold mb-4">Company</h4>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    onClick={(e) => handleNavClick(link.href, e)}
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Services Links */}
-          <div>
-            <h4 className="font-display font-bold mb-4">Services</h4>
-            <ul className="space-y-3">
-              {footerLinks.services.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    onClick={(e) => handleNavClick(link.href, e)}
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Portfolio Links */}
-          <div>
-            <h4 className="font-display font-bold mb-4">Portfolio</h4>
-            <ul className="space-y-3">
-              {footerLinks.portfolio.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    onClick={(e) => handleNavClick(link.href, e)}
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {Object.entries(footerLinks).map(([heading, links]) => (
+            <nav key={heading} aria-labelledby={`footer-${heading.toLowerCase()}`}>
+              <h2
+                id={`footer-${heading.toLowerCase()}`}
+                className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground"
+              >
+                {heading}
+              </h2>
+              <ul className="space-y-1">
+                {links.map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      className="inline-flex min-h-[40px] items-center rounded text-muted-foreground transition-colors hover:text-primary focus-ring"
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Tobiya Game Studio. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              Privacy Policy
+          <p className="text-sm text-muted-foreground">
+            <a
+              href="mailto:contact@tobiyastudio.com"
+              className="rounded transition-colors hover:text-primary focus-ring"
+            >
+              contact@tobiyastudio.com
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              Terms of Service
-            </a>
-          </div>
+          </p>
         </div>
       </div>
     </footer>

@@ -14,7 +14,7 @@ function VRHeadsetModel({ modelUrl }: { modelUrl: string }) {
       mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
@@ -29,7 +29,9 @@ function VRHeadsetModel({ modelUrl }: { modelUrl: string }) {
 
   return (
     <Float speed={2} rotationIntensity={0.2} floatIntensity={1}>
-      <group ref={groupRef} scale={2.5} position={[0, -0.5, 0]}>
+      {/* Scaled to sit inside the hero's right-hand column rather than
+          spanning the full viewport behind the headline. */}
+      <group ref={groupRef} scale={1.7} position={[0, -0.2, 0]}>
         <primitive object={scene} />
       </group>
     </Float>
@@ -89,8 +91,10 @@ export default function VRHeadset3D() {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 opacity-60">
-      <Canvas camera={{ position: [0, 0, 6], fov: 50 }}>
+    <div className="absolute inset-0 z-0" aria-hidden="true">
+      {/* dpr is capped so the canvas does not render at 3x on high-density
+          displays, which was the single largest cost in the hero. */}
+      <Canvas camera={{ position: [0, 0, 6], fov: 50 }} dpr={[1, 1.75]}>
         <Suspense fallback={null}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1} color="#00d4ff" />

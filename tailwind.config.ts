@@ -17,6 +17,16 @@ export default {
         sans: ['Inter', 'sans-serif'],
         display: ['Orbitron', 'sans-serif'],
       },
+      fontSize: {
+        // Modular display scale. Tracking tightens as size grows.
+        "display-xl": ["clamp(2.5rem, 5vw + 1rem, 4.5rem)", { lineHeight: "1.08", letterSpacing: "-0.03em" }],
+        "display-lg": ["clamp(1.875rem, 3vw + 0.75rem, 3rem)", { lineHeight: "1.12", letterSpacing: "-0.02em" }],
+        "display-md": ["clamp(1.5rem, 1.5vw + 0.75rem, 2rem)", { lineHeight: "1.2", letterSpacing: "-0.01em" }],
+        "display-sm": ["1.25rem", { lineHeight: "1.35", letterSpacing: "-0.005em" }],
+        "body-lg": ["1.125rem", { lineHeight: "1.7" }],
+        body: ["1rem", { lineHeight: "1.65" }],
+        caption: ["0.875rem", { lineHeight: "1.5" }],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -42,6 +52,14 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -126,9 +144,11 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'hero-gradient': 'linear-gradient(180deg, hsl(230 50% 5%) 0%, hsl(220 70% 12%) 50%, hsl(230 50% 8%) 100%)',
-        'card-gradient': 'linear-gradient(145deg, hsl(230 45% 10%), hsl(230 45% 6%))',
-        'glow-gradient': 'radial-gradient(ellipse at center, hsl(185 80% 45% / 0.15), transparent 70%)',
+        // Theme-aware: these read the CSS vars rather than hardcoding dark values,
+        // so they stay correct in both themes.
+        'hero-gradient': 'var(--gradient-hero)',
+        'card-gradient': 'var(--gradient-card)',
+        'glow-gradient': 'var(--gradient-glow)',
       },
     },
   },

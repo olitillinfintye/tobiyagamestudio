@@ -4,34 +4,33 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  // resolvedTheme, not theme — with the provider set to follow the system
+  // preference, `theme` is the literal string "system".
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
+  // Placeholder keeps the bar from shifting before the theme is known.
   if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" className="w-9 h-9">
-        <Sun className="h-4 w-4" />
-      </Button>
-    );
+    return <div className="h-11 w-11" aria-hidden="true" />;
   }
+
+  const isDark = resolvedTheme === "dark";
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="w-9 h-9 text-muted-foreground hover:text-foreground transition-colors"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      className="h-11 w-11 text-muted-foreground transition-colors hover:text-foreground"
     >
-      {theme === "dark" ? (
-        <Sun className="h-4 w-4 transition-transform hover:rotate-12" />
+      {isDark ? (
+        <Sun className="h-5 w-5 transition-transform hover:rotate-12" aria-hidden="true" />
       ) : (
-        <Moon className="h-4 w-4 transition-transform hover:-rotate-12" />
+        <Moon className="h-5 w-5 transition-transform hover:-rotate-12" aria-hidden="true" />
       )}
-      <span className="sr-only">Toggle theme</span>
     </Button>
   );
 }
