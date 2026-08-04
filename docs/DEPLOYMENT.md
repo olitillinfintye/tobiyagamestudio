@@ -128,3 +128,54 @@ manually and read its output.
 Hashed filenames make stale files harmless, but to clean up, swap the cron's `cp`
 for `rsync -a --delete ./dist/ $HOME/public_html/` — verify `rsync` exists first,
 and note `--delete` will remove anything in `public_html` not in the build.
+
+---
+
+## Admin password reset
+
+`/admin` supports a self-service password reset via Supabase Auth:
+
+1. **Forgot password?** on the login form → enter email
+2. `supabase.auth.resetPasswordForEmail()` sends a link to `/admin`
+3. The link carries `#type=recovery`, which puts the page into "Set a new password" mode
+4. `supabase.auth.updateUser({ password })` saves it and the user stays signed in
+
+### Required Supabase configuration
+
+The reset link will fail unless the redirect URL is allowlisted.
+
+**Supabase Dashboard → Authentication → URL Configuration → Redirect URLs**, add:
+
+```
+https://www.tobiyastudio.com/admin
+https://tobiyastudio.com/admin
+http://localhost:8080/admin
+```
+
+Also set **Site URL** to `https://www.tobiyastudio.com`.
+
+Without these, Supabase rejects the `redirectTo` and the email either never arrives
+or the link bounces to the site root instead of the reset form.
+
+### Email delivery
+
+Supabase's built-in SMTP is rate-limited (a few emails per hour) and is intended
+for development only. For production, configure a custom SMTP provider under
+**Authentication → Emails → SMTP Settings**. Until then, resets may silently fail
+once the hourly limit is hit — the UI reports this as "Too many attempts".
+
+The email copy itself is editable under **Authentication → Emails → Reset Password**.
+
+### Notes on behaviour
+
+- The request form always reports success, whether or not the email exists. This
+  is deliberate: a form that distinguishes them lets anyone enumerate which
+  addresses have accounts.
+- Recovery is handled **before** the signed-in check in `Admin.tsx`. The email link
+  creates a real session, so without that ordering the dashboard would render
+  instead of the password form.
+- `src/lib/recoveryLink.ts` is imported first in `main.tsx` because supabase-js
+  strips the recovery hash from the URL as soon as it initialises, which can
+  happen before the lazy-loaded `/admin` route mounts.
+- Minimum password length is enforced at 8 characters client-side. Supabase's own
+  default minimum is 6 — raise it under **Authentication → Policies** to match.

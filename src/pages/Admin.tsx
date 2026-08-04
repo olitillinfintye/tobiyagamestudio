@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase, Handshake } from "lucide-react";
-import { mapErrorToMessage } from "@/lib/errorMessages";
 import { Link } from "react-router-dom";
+import AdminAuth, { type AuthMode } from "@/components/admin/AdminAuth";
+import { isPasswordRecoveryLink } from "@/lib/recoveryLink";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { AwardsManagement } from "@/components/admin/AwardsManagement";
@@ -23,9 +22,11 @@ export default function Admin() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  // isPasswordRecoveryLink is captured in main.tsx before supabase-js strips the
+  // hash; PASSWORD_RECOVERY below is the belt-and-braces path for the same thing.
+  const [authMode, setAuthMode] = useState<AuthMode>(
+    isPasswordRecoveryLink ? "reset" : "login",
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,7 +35,17 @@ export default function Admin() {
       else setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Recovery creates a real session, so this must be handled before the
+      // normal signed-in path or the dashboard would render instead of the
+      // "set a new password" form.
+      if (event === "PASSWORD_RECOVERY") {
+        setAuthMode("reset");
+        setUser(session?.user ?? null);
+        setLoading(false);
+        return;
+      }
+
       setUser(session?.user ?? null);
       if (session?.user) checkAdmin(session.user.id);
       else setLoading(false);
@@ -43,27 +54,24 @@ export default function Admin() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Strip the recovery tokens out of the address bar once they've been consumed.
+  useEffect(() => {
+    if (authMode === "reset" && window.location.hash) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [authMode]);
+
+  const handleResetComplete = async () => {
+    setAuthMode("login");
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user ?? null);
+    if (session?.user) await checkAdmin(session.user.id);
+  };
+
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase.from("admin_users").select("*").eq("user_id", userId).maybeSingle();
     setIsAdmin(!!data);
     setLoading(false);
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: { emailRedirectTo: window.location.origin }
-      });
-      if (error) toast.error(mapErrorToMessage(error));
-      else toast.success("Account created! You can now log in.");
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) toast.error(mapErrorToMessage(error));
-      else toast.success("Logged in!");
-    }
   };
 
   const handleLogout = async () => {
@@ -79,45 +87,25 @@ export default function Admin() {
     );
   }
 
+  // Recovery takes priority over the signed-in state: the email link creates a
+  // session, but the user still has to choose a new password.
+  if (authMode === "reset") {
+    return (
+      <AdminAuth
+        mode="reset"
+        onModeChange={setAuthMode}
+        onResetComplete={handleResetComplete}
+      />
+    );
+  }
+
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="glass-card p-8 w-full max-w-md">
-          <Link to="/" className="inline-flex items-center gap-2 text-primary mb-6 hover:underline">
-            <ArrowLeft className="w-4 h-4" /> Back to site
-          </Link>
-          <h1 className="font-display text-2xl font-bold mb-6">
-            {isSignUp ? "Create Admin Account" : "Admin Login"}
-          </h1>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              placeholder="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-background/50"
-            />
-            <Input
-              placeholder="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-background/50"
-            />
-            <Button type="submit" className="w-full">
-              {isSignUp ? "Sign Up" : "Login"}
-            </Button>
-          </form>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary hover:underline">
-              {isSignUp ? "Login" : "Sign Up"}
-            </button>
-          </p>
-        </div>
-      </div>
+      <AdminAuth
+        mode={authMode}
+        onModeChange={setAuthMode}
+        onResetComplete={handleResetComplete}
+      />
     );
   }
 
