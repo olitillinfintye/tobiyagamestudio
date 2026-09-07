@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import heroBg from "@/assets/hero-bg.jpg";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 
 const VRHeadset3D = lazy(() => import("./VRHeadset3D"));
 
@@ -44,7 +44,7 @@ export default function Hero() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const { data } = await supabase
+      const { data } = await cms
         .from("site_settings")
         .select("*")
         .in("key", [

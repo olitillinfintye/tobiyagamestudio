@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Loader2 } from "lucide-react";
@@ -22,7 +22,7 @@ export function ImageUpload({ value, onChange, bucket = "project-images" }: Imag
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await cms.storage
       .from(bucket)
       .upload(fileName, file);
 
@@ -32,7 +32,7 @@ export function ImageUpload({ value, onChange, bucket = "project-images" }: Imag
       return;
     }
 
-    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+    const { data } = cms.storage.from(bucket).getPublicUrl(fileName);
     onChange(data.publicUrl);
     toast.success("Image uploaded!");
     setUploading(false);

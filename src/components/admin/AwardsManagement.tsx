@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +33,7 @@ export function AwardsManagement() {
   }, []);
 
   const fetchAwards = async () => {
-    const { data } = await supabase.from("awards").select("*").order("display_order");
+    const { data } = await cms.from("awards").select("*").order("display_order");
     if (data) setAwards(data);
   };
 
@@ -41,11 +41,11 @@ export function AwardsManagement() {
     e.preventDefault();
     
     if (editingAward) {
-      const { error } = await supabase.from("awards").update(formData).eq("id", editingAward.id);
+      const { error } = await cms.from("awards").update(formData).eq("id", editingAward.id);
       if (error) toast.error(error.message);
       else { toast.success("Award updated!"); resetForm(); fetchAwards(); }
     } else {
-      const { error } = await supabase.from("awards").insert(formData);
+      const { error } = await cms.from("awards").insert(formData);
       if (error) toast.error(error.message);
       else { toast.success("Award added!"); resetForm(); fetchAwards(); }
     }
@@ -53,7 +53,7 @@ export function AwardsManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this award?")) return;
-    const { error } = await supabase.from("awards").delete().eq("id", id);
+    const { error } = await cms.from("awards").delete().eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Deleted!"); fetchAwards(); }
   };

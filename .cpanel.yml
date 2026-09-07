@@ -12,7 +12,4 @@
 # .htaccess drives SPA routing for /admin and /blog/:slug.
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/public_html
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R ./dist/. $DEPLOYPATH/
-    - /bin/echo "Deployed $(date -u +%Y-%m-%dT%H:%M:%SZ) to $DEPLOYPATH"
+    - /bin/bash ./scripts/deploy-cpanel.sh

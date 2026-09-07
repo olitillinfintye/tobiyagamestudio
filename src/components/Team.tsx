@@ -14,7 +14,7 @@ import {
   Mail,
   Link as LinkIcon,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { SectionHeader } from "./SectionHeader";
 import { CardSkeleton, LoadingAnnouncer, SectionNotice } from "./CardSkeleton";
 
@@ -81,7 +81,7 @@ export default function Team() {
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await cms
           .from("team_members")
           .select("*")
           .order("display_order", { ascending: true });

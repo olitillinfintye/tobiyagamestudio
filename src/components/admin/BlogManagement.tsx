@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,7 @@ export default function BlogManagement() {
   const { data: posts, isLoading } = useQuery({
     queryKey: ["blog-posts-admin"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await cms
         .from("blog_posts")
         .select("*")
         .order("created_at", { ascending: false });
@@ -70,7 +70,7 @@ export default function BlogManagement() {
           ? (published_at ? new Date(published_at).toISOString() : new Date().toISOString())
           : null,
       };
-      const { error } = await supabase.from("blog_posts").insert(insertData);
+      const { error } = await cms.from("blog_posts").insert(insertData);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -90,7 +90,7 @@ export default function BlogManagement() {
           ? (published_at ? new Date(published_at).toISOString() : new Date().toISOString())
           : null,
       };
-      const { error } = await supabase
+      const { error } = await cms
         .from("blog_posts")
         .update(updateData)
         .eq("id", id);
@@ -106,7 +106,7 @@ export default function BlogManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+      const { error } = await cms.from("blog_posts").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -122,7 +122,7 @@ export default function BlogManagement() {
         published,
         published_at: published ? new Date().toISOString() : null,
       };
-      const { error } = await supabase
+      const { error } = await cms
         .from("blog_posts")
         .update(updateData)
         .eq("id", id);

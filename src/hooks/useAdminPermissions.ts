@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 
 type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services';
 
@@ -18,14 +18,16 @@ export function useAdminPermissions(): UseAdminPermissionsReturn {
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await cms.auth.getUser();
         if (!user) {
+          setPermissions([]);
+          setIsSuperAdmin(false);
           setLoading(false);
           return;
         }
 
         // Check if super admin
-        const { data: adminData } = await supabase
+        const { data: adminData } = await cms
           .from("admin_users")
           .select("is_super_admin")
           .eq("user_id", user.id)
@@ -35,8 +37,9 @@ export function useAdminPermissions(): UseAdminPermissionsReturn {
           setIsSuperAdmin(true);
           setPermissions(['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics', 'users', 'services']);
         } else {
+          setIsSuperAdmin(false);
           // Fetch specific permissions
-          const { data: permData } = await supabase
+          const { data: permData } = await cms
             .from("admin_permissions")
             .select("permission")
             .eq("user_id", user.id);
@@ -53,7 +56,7 @@ export function useAdminPermissions(): UseAdminPermissionsReturn {
     fetchPermissions();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = cms.auth.onAuthStateChange(() => {
       fetchPermissions();
     });
 

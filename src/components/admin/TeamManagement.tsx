@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +40,7 @@ export function TeamManagement() {
   }, []);
 
   const fetchMembers = async () => {
-    const { data } = await supabase.from("team_members").select("*").order("display_order");
+    const { data } = await cms.from("team_members").select("*").order("display_order");
     if (data) setMembers(data as TeamMember[]);
   };
 
@@ -59,11 +59,11 @@ export function TeamManagement() {
     };
     
     if (editingMember) {
-      const { error } = await supabase.from("team_members").update(dataToSave).eq("id", editingMember.id);
+      const { error } = await cms.from("team_members").update(dataToSave).eq("id", editingMember.id);
       if (error) toast.error(error.message);
       else { toast.success("Team member updated!"); resetForm(); fetchMembers(); }
     } else {
-      const { error } = await supabase.from("team_members").insert(dataToSave);
+      const { error } = await cms.from("team_members").insert(dataToSave);
       if (error) toast.error(error.message);
       else { toast.success("Team member added!"); resetForm(); fetchMembers(); }
     }
@@ -71,7 +71,7 @@ export function TeamManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this team member?")) return;
-    const { error } = await supabase.from("team_members").delete().eq("id", id);
+    const { error } = await cms.from("team_members").delete().eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Deleted!"); fetchMembers(); }
   };

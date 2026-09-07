@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ export function NotificationRecipients() {
 
   const fetchRecipients = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await cms
       .from("site_settings")
       .select("*")
       .eq("key", "notification_recipients")
@@ -66,14 +66,13 @@ export function NotificationRecipients() {
     }
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await cms
         .from("site_settings")
         .upsert(
           {
             key: "notification_recipients",
             value: JSON.stringify(recipients),
             label: "Notification Recipients",
-            updated_at: new Date().toISOString(),
           },
           { onConflict: "key" }
         );

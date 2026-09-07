@@ -1,4 +1,4 @@
-// Must come first: this captures the password-recovery hash before the supabase
+// Must come first: this captures the password-recovery hash before the cms
 // client can initialise and strip it from the URL. See src/lib/recoveryLink.ts.
 import "./lib/recoveryLink";
 

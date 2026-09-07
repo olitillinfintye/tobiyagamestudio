@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -83,7 +83,7 @@ export function ProjectsManagement() {
   }, []);
 
   const fetchProjects = async () => {
-    const { data } = await supabase.from("projects").select("*").order("display_order");
+    const { data } = await cms.from("projects").select("*").order("display_order");
     if (data) setProjects(data);
   };
 
@@ -104,13 +104,13 @@ export function ProjectsManagement() {
     };
 
     if (editingProject) {
-      const { error } = await supabase.from("projects").update(projectData).eq("id", editingProject.id);
+      const { error } = await cms.from("projects").update(projectData).eq("id", editingProject.id);
       if (error) toast.error(error.message);
       else { toast.success("Project updated!"); resetForm(); fetchProjects(); }
     } else {
       // Get next display order
       const maxOrder = projects.reduce((max, p) => Math.max(max, p.display_order || 0), 0);
-      const { error } = await supabase.from("projects").insert({ ...projectData, display_order: maxOrder + 1 });
+      const { error } = await cms.from("projects").insert({ ...projectData, display_order: maxOrder + 1 });
       if (error) toast.error(error.message);
       else { toast.success("Project created!"); resetForm(); fetchProjects(); }
     }
@@ -118,7 +118,7 @@ export function ProjectsManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this project?")) return;
-    const { error } = await supabase.from("projects").delete().eq("id", id);
+    const { error } = await cms.from("projects").delete().eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Deleted!"); fetchProjects(); }
   };
@@ -176,7 +176,7 @@ export function ProjectsManagement() {
       }));
 
       for (const update of updates) {
-        await supabase
+        await cms
           .from("projects")
           .update({ display_order: update.display_order })
           .eq("id", update.id);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { format } from "date-fns";
 import { Calendar, User, ArrowLeft, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export default function BlogPostPage() {
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await cms
           .from("blog_posts")
           .select("*")
           .eq("slug", slug)

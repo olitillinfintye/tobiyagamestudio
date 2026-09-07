@@ -1,6 +1,7 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+    RewriteRule ^(?:api|uploads)(?:/|$) - [L]
   
   # If the requested resource exists as a file or directory, serve it directly
   RewriteCond %{REQUEST_FILENAME} !-f

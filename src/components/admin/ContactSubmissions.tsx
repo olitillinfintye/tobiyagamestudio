@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +25,9 @@ export default function ContactSubmissions() {
 
   const { data: submissions, isLoading } = useQuery({
     queryKey: ['contact-submissions'],
+    refetchInterval: 30000,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await cms
         .from('contact_submissions')
         .select('*')
         .order('created_at', { ascending: false });
@@ -38,7 +39,7 @@ export default function ContactSubmissions() {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await cms
         .from('contact_submissions')
         .update({ read: true })
         .eq('id', id);
@@ -52,7 +53,7 @@ export default function ContactSubmissions() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await cms
         .from('contact_submissions')
         .delete()
         .eq('id', id);
@@ -75,28 +76,6 @@ export default function ContactSubmissions() {
       markAsReadMutation.mutate(submission.id);
     }
   };
-
-  // Real-time subscription for new submissions
-  useEffect(() => {
-    const channel = supabase
-      .channel('contact-submissions-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'contact_submissions',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['contact-submissions'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   const unreadCount = submissions?.filter(s => !s.read).length || 0;
 

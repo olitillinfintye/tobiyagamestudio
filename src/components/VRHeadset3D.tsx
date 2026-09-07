@@ -2,7 +2,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, useGLTF } from "@react-three/drei";
 import { useRef, Suspense, useEffect, useState } from "react";
 import * as THREE from "three";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 
 function VRHeadsetModel({ modelUrl }: { modelUrl: string }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -76,7 +76,7 @@ export default function VRHeadset3D() {
 
   useEffect(() => {
     const fetchModelUrl = async () => {
-      const { data } = await supabase
+      const { data } = await cms
         .from("site_settings")
         .select("value")
         .eq("key", "hero_3d_model")

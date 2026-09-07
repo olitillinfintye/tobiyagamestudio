@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,7 +89,7 @@ export function ServicesManagement() {
   }, []);
 
   const fetchServices = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await cms
       .from("services")
       .select("*")
       .order("display_order", { ascending: true });
@@ -106,7 +106,7 @@ export function ServicesManagement() {
     e.preventDefault();
 
     if (editingService) {
-      const { error } = await supabase
+      const { error } = await cms
         .from("services")
         .update({
           title: formData.title,
@@ -124,7 +124,7 @@ export function ServicesManagement() {
       }
     } else {
       const maxOrder = Math.max(...services.map((s) => s.display_order), 0);
-      const { error } = await supabase.from("services").insert({
+      const { error } = await cms.from("services").insert({
         title: formData.title,
         description: formData.description,
         icon: formData.icon,
@@ -146,7 +146,7 @@ export function ServicesManagement() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this service?")) return;
 
-    const { error } = await supabase.from("services").delete().eq("id", id);
+    const { error } = await cms.from("services").delete().eq("id", id);
 
     if (error) {
       toast.error("Failed to delete service");
@@ -208,7 +208,7 @@ export function ServicesManagement() {
 
       // Update display orders in database
       for (let i = 0; i < newServices.length; i++) {
-        await supabase
+        await cms
           .from("services")
           .update({ display_order: i + 1 })
           .eq("id", newServices[i].id);

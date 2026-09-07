@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ export function ContactSettings() {
 
   const fetchSettings = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await cms
       .from("site_settings")
       .select("*")
       .in("key", ["contact_email", "contact_phone", "contact_location", "contact_website"]);
@@ -58,13 +58,12 @@ export function ContactSettings() {
     setSaving(true);
     try {
       for (const setting of settings) {
-        const { error } = await supabase
+        const { error } = await cms
           .from("site_settings")
           .upsert({ 
             key: setting.key, 
             value: setting.value, 
             label: setting.label,
-            updated_at: new Date().toISOString()
           }, { onConflict: 'key' });
 
         if (error) throw error;

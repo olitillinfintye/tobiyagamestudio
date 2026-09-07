@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Play, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import ProjectDetailDialog from "./ProjectDetailDialog";
 import { SectionHeader } from "./SectionHeader";
 import { CardSkeleton, LoadingAnnouncer, SectionNotice } from "./CardSkeleton";
@@ -68,7 +68,7 @@ export default function Portfolio() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await cms
           .from("projects")
           .select("*")
           .order("display_order", { ascending: true });

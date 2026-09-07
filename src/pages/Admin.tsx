@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase, Handshake } from "lucide-react";
@@ -10,7 +10,7 @@ import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { AwardsManagement } from "@/components/admin/AwardsManagement";
 import { SettingsManagement } from "@/components/admin/SettingsManagement";
-import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import CmsOverview from "@/components/admin/CmsOverview";
 import ContactSubmissions from "@/components/admin/ContactSubmissions";
 import BlogManagement from "@/components/admin/BlogManagement";
 import UserManagement from "@/components/admin/UserManagement";
@@ -22,20 +22,18 @@ export default function Admin() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  // isPasswordRecoveryLink is captured in main.tsx before supabase-js strips the
-  // hash; PASSWORD_RECOVERY below is the belt-and-braces path for the same thing.
   const [authMode, setAuthMode] = useState<AuthMode>(
     isPasswordRecoveryLink ? "reset" : "login",
   );
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    cms.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) checkAdmin(session.user.id);
       else setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = cms.auth.onAuthStateChange((event, session) => {
       // Recovery creates a real session, so this must be handled before the
       // normal signed-in path or the dashboard would render instead of the
       // "set a new password" form.
@@ -54,28 +52,23 @@ export default function Admin() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Strip the recovery tokens out of the address bar once they've been consumed.
-  useEffect(() => {
-    if (authMode === "reset" && window.location.hash) {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  }, [authMode]);
-
   const handleResetComplete = async () => {
+    window.history.replaceState(null, "", window.location.pathname);
     setAuthMode("login");
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await cms.auth.getSession();
     setUser(session?.user ?? null);
     if (session?.user) await checkAdmin(session.user.id);
   };
 
   const checkAdmin = async (userId: string) => {
-    const { data } = await supabase.from("admin_users").select("*").eq("user_id", userId).maybeSingle();
+    const { data } = await cms.from("admin_users").select("*").eq("user_id", userId).maybeSingle();
     setIsAdmin(!!data);
     setLoading(false);
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await cms.auth.signOut();
+    if (error) return;
     setIsAdmin(false);
   };
 
@@ -150,7 +143,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </Button>
         </div>
 
-        <Tabs defaultValue="analytics" className="space-y-4 sm:space-y-6">
+        <Tabs defaultValue={["analytics", "messages", "projects", "team", "awards", "blog", "services", "settings"].find(hasPermission) ?? "users"} className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full grid-cols-5 sm:grid-cols-10 gap-1 h-auto p-1">
             {hasPermission('analytics') && (
               <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
@@ -216,7 +209,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           {hasPermission('analytics') && (
             <TabsContent value="analytics">
-              <AnalyticsDashboard />
+              <CmsOverview />
             </TabsContent>
           )}
 

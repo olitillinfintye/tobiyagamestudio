@@ -1,3 +1,7 @@
+# Migration Notice
+
+The cPanel/PHP migration supersedes the deployment commands below. Follow [CPANEL-MIGRATION.md](CPANEL-MIGRATION.md), including staging acceptance and both approval gates. Do not use the legacy copy-only cron for the PHP-backed CMS. The following content describes the former Supabase deployment.
+
 # Deployment
 
 The site is a static Vite build with Supabase as its backend. It is served from

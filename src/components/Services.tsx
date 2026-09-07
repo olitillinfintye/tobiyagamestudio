@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import * as LucideIcons from "lucide-react";
 import { SectionHeader } from "./SectionHeader";
 
@@ -78,7 +78,7 @@ export default function Services() {
 
   useEffect(() => {
     const fetchServices = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await cms
         .from("services")
         .select("*")
         .order("display_order", { ascending: true });

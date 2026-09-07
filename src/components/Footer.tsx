@@ -15,7 +15,7 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { BrandLogo } from "./BrandLogo";
 
 interface SocialLink {
@@ -63,7 +63,7 @@ export default function Footer() {
 
   useEffect(() => {
     const fetchSocialLinks = async () => {
-      const { data } = await supabase
+      const { data } = await cms
         .from("site_settings")
         .select("value")
         .eq("key", "social_links")

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms, request } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,10 +81,10 @@ export default function UserManagement() {
   }, []);
 
   const checkSuperAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await cms.auth.getUser();
     if (user) {
       setCurrentUserId(user.id);
-      const { data } = await supabase
+      const { data } = await cms
         .from("admin_users")
         .select("is_super_admin")
         .eq("user_id", user.id)
@@ -95,29 +95,11 @@ export default function UserManagement() {
 
   const fetchAdminUsers = async () => {
     try {
-      const { data: admins, error } = await supabase
-        .from("admin_users")
-        .select("*")
-        .order("created_at", { ascending: true });
+      const { data: admins, error } = await request<AdminUser[]>("users-list");
 
       if (error) throw error;
 
-      // Fetch permissions for each admin
-      const adminsWithPermissions = await Promise.all(
-        (admins || []).map(async (admin) => {
-          const { data: permissions } = await supabase
-            .from("admin_permissions")
-            .select("permission")
-            .eq("user_id", admin.user_id);
-
-          return {
-            ...admin,
-            permissions: (permissions || []).map((p) => p.permission as AdminPermission),
-          };
-        })
-      );
-
-      setAdminUsers(adminsWithPermissions);
+      setAdminUsers(admins ?? []);
     } catch (error) {
       console.error("Error fetching admin users:", error);
       toast.error("Failed to load admin users");
@@ -135,43 +117,13 @@ export default function UserManagement() {
 
     setSubmitting(true);
     try {
-      // Create user via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error } = await request("users-create", {
         email: newUserEmail,
         password: newUserPassword,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
+        is_super_admin: selectedRole === 'super_admin',
+        permissions: selectedPermissions,
       });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("User creation failed");
-
-      const isSuperAdminRole = selectedRole === 'super_admin';
-
-      // Add to admin_users table
-      const { error: adminError } = await supabase
-        .from("admin_users")
-        .insert({
-          user_id: authData.user.id,
-          is_super_admin: isSuperAdminRole,
-        });
-
-      if (adminError) throw adminError;
-
-      // Add permissions if not super admin
-      if (!isSuperAdminRole && selectedPermissions.length > 0) {
-        const permissionInserts = selectedPermissions.map((permission) => ({
-          user_id: authData.user!.id,
-          permission: permission as any,
-        }));
-
-        const { error: permError } = await supabase
-          .from("admin_permissions")
-          .insert(permissionInserts);
-
-        if (permError) throw permError;
-      }
+      if (error) throw error;
 
       toast.success("Admin user created successfully!");
       resetForm();
@@ -206,17 +158,7 @@ export default function UserManagement() {
     if (!confirm("Are you sure you want to remove this admin user?")) return;
 
     try {
-      // Delete from admin_permissions first
-      await supabase
-        .from("admin_permissions")
-        .delete()
-        .eq("user_id", userId);
-
-      // Delete from admin_users
-      const { error } = await supabase
-        .from("admin_users")
-        .delete()
-        .eq("user_id", userId);
+      const { error } = await request("users-delete", { user_id: userId });
 
       if (error) throw error;
 
@@ -240,35 +182,12 @@ export default function UserManagement() {
 
     setSubmitting(true);
     try {
-      const isSuperAdminRole = selectedRole === 'super_admin';
-
-      // Update admin_users
-      const { error: adminError } = await supabase
-        .from("admin_users")
-        .update({ is_super_admin: isSuperAdminRole })
-        .eq("user_id", editingUser.user_id);
-
-      if (adminError) throw adminError;
-
-      // Delete all existing permissions
-      await supabase
-        .from("admin_permissions")
-        .delete()
-        .eq("user_id", editingUser.user_id);
-
-      // Add new permissions if not super admin
-      if (!isSuperAdminRole && selectedPermissions.length > 0) {
-        const permissionInserts = selectedPermissions.map((permission) => ({
-          user_id: editingUser.user_id,
-          permission: permission as any,
-        }));
-
-        const { error: permError } = await supabase
-          .from("admin_permissions")
-          .insert(permissionInserts);
-
-        if (permError) throw permError;
-      }
+      const { error } = await request("users-update", {
+        user_id: editingUser.user_id,
+        is_super_admin: selectedRole === 'super_admin',
+        permissions: selectedPermissions,
+      });
+      if (error) throw error;
 
       toast.success("User updated successfully!");
       setEditDialogOpen(false);
@@ -364,7 +283,8 @@ export default function UserManagement() {
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  minLength={6}
+                  minLength={12}
+                  maxLength={72}
                   required
                 />
               </div>

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Calendar, ArrowRight, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { SectionHeader } from "./SectionHeader";
@@ -31,7 +31,7 @@ export default function Blog() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await cms
           .from("blog_posts")
           .select("*")
           .eq("published", true)

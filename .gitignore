@@ -11,9 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+config.php
+backend/vendor/
+migration-data/
+public/uploads/*
+!public/uploads/.htaccess
 
 # Staging directory used by the deploy workflow to build the `deploy` branch
 .publish
+.
 
 # Editor directories and files
 .vscode/*

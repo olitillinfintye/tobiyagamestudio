@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,7 +65,7 @@ export function PartnersManagement() {
 
   const fetchPartners = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await cms
       .from("partners")
       .select("*")
       .order("display_order", { ascending: true });
@@ -107,7 +107,7 @@ export function PartnersManagement() {
 
     try {
       if (editingPartner) {
-        const { error } = await supabase
+        const { error } = await cms
           .from("partners")
           .update({
             name: formData.name,
@@ -124,7 +124,7 @@ export function PartnersManagement() {
           ? Math.max(...partners.map(p => p.display_order)) + 1 
           : 0;
 
-        const { error } = await supabase.from("partners").insert({
+        const { error } = await cms.from("partners").insert({
           name: formData.name,
           logo_url: formData.logo_url,
           website_url: formData.website_url || null,
@@ -147,7 +147,7 @@ export function PartnersManagement() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this partner?")) return;
 
-    const { error } = await supabase.from("partners").delete().eq("id", id);
+    const { error } = await cms.from("partners").delete().eq("id", id);
     if (error) {
       toast.error("Failed to delete");
     } else {
@@ -157,7 +157,7 @@ export function PartnersManagement() {
   };
 
   const toggleActive = async (partner: Partner) => {
-    const { error } = await supabase
+    const { error } = await cms
       .from("partners")
       .update({ is_active: !partner.is_active })
       .eq("id", partner.id);
@@ -186,7 +186,7 @@ export function PartnersManagement() {
       }));
 
       for (const update of updates) {
-        await supabase
+        await cms
           .from("partners")
           .update({ display_order: update.display_order })
           .eq("id", update.id);

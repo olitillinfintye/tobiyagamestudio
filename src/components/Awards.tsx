@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Trophy, Star, Medal, Award } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { SectionHeader } from "./SectionHeader";
 
 interface AwardItem {
@@ -21,7 +21,7 @@ export default function Awards() {
   useEffect(() => {
     const fetchAwards = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await cms
           .from("awards")
           .select("*")
           .order("display_order", { ascending: true });

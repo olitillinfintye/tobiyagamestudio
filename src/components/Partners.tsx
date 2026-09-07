@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Eyebrow } from "@/components/ui/eyebrow";
 
 interface Partner {
@@ -18,7 +18,7 @@ export default function Partners() {
 
   useEffect(() => {
     const fetchPartners = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await cms
         .from("partners")
         .select("*")
         .eq("is_active", true)

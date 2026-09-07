@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { cms, request } from "@/integrations/cpanel/client";
 import { SectionHeader } from "./SectionHeader";
 import { cn } from "@/lib/utils";
 
@@ -85,7 +85,7 @@ export default function Contact() {
 
   useEffect(() => {
     const fetchContactInfo = async () => {
-      const { data } = await supabase
+      const { data } = await cms
         .from("site_settings")
         .select("*")
         .in("key", ["contact_email", "contact_phone", "contact_location", "contact_website"]);
@@ -113,7 +113,7 @@ export default function Contact() {
   /**
    * Courtesy throttle only — localStorage is trivially cleared, so this stops
    * accidental double-submits, not abuse. Real rate limiting belongs in the
-   * `send-contact-notification` edge function / a Supabase RLS policy.
+  * PHP API.
    */
   const isThrottled = () => {
     const last = localStorage.getItem("lastContactSubmit");
@@ -127,7 +127,6 @@ export default function Contact() {
   const onSubmit = async (values: ContactFormValues) => {
     if (isThrottled()) return;
 
-    // Built explicitly so the payload matches the generated Supabase row type.
     const payload = {
       name: values.name,
       email: values.email,
@@ -136,20 +135,9 @@ export default function Contact() {
     };
 
     try {
-      const { data: submission, error } = await supabase
-        .from("contact_submissions")
-        .insert(payload)
-        .select("id")
-        .single();
+      const { error } = await request("contact", payload);
 
       if (error) throw error;
-
-      // Non-blocking notification; a failure here must not block the user.
-      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-notification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submission_id: submission.id, ...payload }),
-      }).catch(console.error);
 
       localStorage.setItem("lastContactSubmit", Date.now().toString());
       setSubmitted(true);

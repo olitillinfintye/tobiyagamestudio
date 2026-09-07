@@ -4,14 +4,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Loader2, MailCheck, KeyRound } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { mapErrorToMessage } from "@/lib/errorMessages";
 import { cn } from "@/lib/utils";
 
-export type AuthMode = "login" | "signup" | "forgot" | "reset";
+export type AuthMode = "login" | "forgot" | "reset";
 
 const emailSchema = z.object({
   email: z.string().trim().email("Enter a valid email address.").max(200),
@@ -23,7 +22,7 @@ const credentialsSchema = emailSchema.extend({
 
 const newPasswordSchema = z
   .object({
-    password: z.string().min(8, "Password must be at least 8 characters."),
+    password: z.string().min(12, "Password must be at least 12 characters.").max(72),
     confirm: z.string(),
   })
   .refine((v) => v.password === v.confirm, {
@@ -66,12 +65,9 @@ function Shell({ title, description, children }: {
   );
 }
 
-/** Sign in / sign up form. */
-function CredentialsForm({ mode, onModeChange }: {
-  mode: "login" | "signup";
+function CredentialsForm({ onModeChange }: {
   onModeChange: (m: AuthMode) => void;
 }) {
-  const isSignUp = mode === "signup";
   const {
     register,
     handleSubmit,
@@ -79,22 +75,11 @@ function CredentialsForm({ mode, onModeChange }: {
   } = useForm<CredentialValues>({ resolver: zodResolver(credentialsSchema), mode: "onBlur" });
 
   const onSubmit = async (values: CredentialValues) => {
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: { emailRedirectTo: `${window.location.origin}/admin` },
-      });
-      if (error) toast.error(mapErrorToMessage(error));
-      else toast.success("Account created. Check your email to confirm, then log in.");
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await cms.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
-    if (error) toast.error(mapErrorToMessage(error));
+    if (error) toast.error(error.message);
     else toast.success("Logged in.");
   };
 
@@ -122,7 +107,7 @@ function CredentialsForm({ mode, onModeChange }: {
             <label htmlFor="password" className="text-sm font-medium">
               Password
             </label>
-            {!isSignUp && (
+            {(
               <button
                 type="button"
                 onClick={() => onModeChange("forgot")}
@@ -135,7 +120,7 @@ function CredentialsForm({ mode, onModeChange }: {
           <Input
             id="password"
             type="password"
-            autoComplete={isSignUp ? "new-password" : "current-password"}
+            autoComplete="current-password"
             placeholder="••••••••"
             aria-invalid={!!errors.password}
             className={cn("bg-background/60", errors.password && "border-destructive")}
@@ -148,26 +133,14 @@ function CredentialsForm({ mode, onModeChange }: {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              {isSignUp ? "Creating account…" : "Logging in…"}
+              Logging in...
             </>
-          ) : isSignUp ? (
-            "Sign up"
           ) : (
             "Log in"
           )}
         </Button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-        <button
-          type="button"
-          onClick={() => onModeChange(isSignUp ? "login" : "signup")}
-          className="rounded text-primary hover:underline focus-ring"
-        >
-          {isSignUp ? "Log in" : "Sign up"}
-        </button>
-      </p>
     </>
   );
 }
@@ -182,20 +155,16 @@ function ForgotPasswordForm({ onModeChange }: { onModeChange: (m: AuthMode) => v
   } = useForm<EmailValues>({ resolver: zodResolver(emailSchema), mode: "onBlur" });
 
   const onSubmit = async ({ email }: EmailValues) => {
-    // The link lands back on /admin, where a `type=recovery` hash switches the
-    // page into "reset" mode. This URL must be listed under
-    // Supabase -> Authentication -> URL Configuration -> Redirect URLs.
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/admin`,
-    });
+    const { error } = await cms.auth.resetPasswordForEmail(email);
 
-    // Rate limiting is worth surfacing; anything else is swallowed on purpose so
-    // this form cannot be used to discover which emails have accounts.
     if (error && /rate|limit|too many/i.test(error.message)) {
       toast.error("Too many attempts. Please wait a minute and try again.");
       return;
     }
-    if (error) console.error("Password reset request failed:", error);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
 
     setSentTo(email);
   };
@@ -268,9 +237,9 @@ function ResetPasswordForm({ onDone }: { onDone: () => void }) {
   } = useForm<NewPasswordValues>({ resolver: zodResolver(newPasswordSchema), mode: "onBlur" });
 
   const onSubmit = async (values: NewPasswordValues) => {
-    const { error } = await supabase.auth.updateUser({ password: values.password });
+    const { error } = await cms.auth.updateUser({ password: values.password });
     if (error) {
-      toast.error(mapErrorToMessage(error));
+      toast.error(error.message);
       return;
     }
     toast.success("Password updated. You're signed in.");
@@ -287,7 +256,7 @@ function ResetPasswordForm({ onDone }: { onDone: () => void }) {
           id="new-password"
           type="password"
           autoComplete="new-password"
-          placeholder="At least 8 characters"
+          placeholder="At least 12 characters"
           aria-invalid={!!errors.password}
           className={cn("bg-background/60", errors.password && "border-destructive")}
           {...register("password")}
@@ -360,8 +329,8 @@ export default function AdminAuth({ mode, onModeChange, onResetComplete }: Admin
   }
 
   return (
-    <Shell title={mode === "signup" ? "Create Admin Account" : "Admin Login"}>
-      <CredentialsForm mode={mode} onModeChange={onModeChange} />
+    <Shell title="Admin Login">
+      <CredentialsForm onModeChange={onModeChange} />
     </Shell>
   );
 }

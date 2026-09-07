@@ -1,4 +1,10 @@
-# Welcome to your Lovable project
+# Tobiya Game Studio CMS
+
+React/Vite studio website and admin CMS, with a PHP 8.4/MariaDB replacement backend prepared for cPanel. Production migration is not yet complete.
+
+See [cPanel migration and setup](docs/CPANEL-MIGRATION.md) for local development, private configuration, data transfer, staging checks, and deployment gates. Do not deploy the new build before that checklist is complete.
+
+The original project-generation notes follow for historical reference.
 
 ## Project info
 

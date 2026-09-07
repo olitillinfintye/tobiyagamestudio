@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, X, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ export function GalleryUpload({ images, onChange, bucket = "project-images" }: G
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await cms.storage
         .from(bucket)
         .upload(fileName, file);
 
@@ -42,7 +42,7 @@ export function GalleryUpload({ images, onChange, bucket = "project-images" }: G
         continue;
       }
 
-      const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      const { data } = cms.storage.from(bucket).getPublicUrl(fileName);
       newUrls.push(data.publicUrl);
     }
 

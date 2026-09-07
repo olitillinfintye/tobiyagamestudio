@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Suspense, lazy } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,7 +44,7 @@ export function SettingsManagement() {
 
   const fetchSettings = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await cms
       .from("site_settings")
       .select("*")
       .in("key", ["hero_projects", "hero_team_members", "hero_awards", "hero_years", "hero_3d_model", "showreel_video_url", "social_links"]);
@@ -89,10 +89,9 @@ export function SettingsManagement() {
     setSaving(true);
     try {
       for (const stat of stats) {
-        const { error } = await supabase
+        const { error } = await cms
           .from("site_settings")
-          .update({ value: stat.value, label: stat.label })
-          .eq("key", stat.key);
+          .upsert({ key: stat.key, value: stat.value, label: stat.label }, { onConflict: 'key' });
 
         if (error) throw error;
       }
@@ -114,27 +113,26 @@ export function SettingsManagement() {
 
     setUploadingModel(true);
     try {
-      const fileName = `3d-models/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
+      const fileName = `3d-models/${crypto.randomUUID()}.${file.name.split('.').pop()?.toLowerCase()}`;
+      const { error: uploadError } = await cms.storage
         .from("project-images")
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = cms.storage
         .from("project-images")
         .getPublicUrl(fileName);
 
       const newModelUrl = urlData.publicUrl;
 
       // Update the database setting
-      const { error: updateError } = await supabase
+      const { error: updateError } = await cms
         .from("site_settings")
         .upsert({ 
           key: "hero_3d_model", 
           value: newModelUrl, 
           label: "Hero 3D Model",
-          updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
 
       if (updateError) throw updateError;
@@ -151,13 +149,12 @@ export function SettingsManagement() {
   const handleShowreelUrlSave = async () => {
     setSavingShowreel(true);
     try {
-      const { error } = await supabase
+      const { error } = await cms
         .from("site_settings")
         .upsert({ 
           key: "showreel_video_url", 
           value: showreelUrl, 
           label: "Showreel Video URL",
-          updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
 
       if (error) throw error;
@@ -184,26 +181,25 @@ export function SettingsManagement() {
 
     setUploadingShowreel(true);
     try {
-      const fileName = `showreel/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
+      const fileName = `showreel/${crypto.randomUUID()}.${file.name.split('.').pop()?.toLowerCase()}`;
+      const { error: uploadError } = await cms.storage
         .from("project-images")
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = cms.storage
         .from("project-images")
         .getPublicUrl(fileName);
 
       const newVideoUrl = urlData.publicUrl;
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await cms
         .from("site_settings")
         .upsert({ 
           key: "showreel_video_url", 
           value: newVideoUrl, 
           label: "Showreel Video URL",
-          updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
 
       if (updateError) throw updateError;
@@ -219,13 +215,12 @@ export function SettingsManagement() {
   const handleSaveSocialLinks = async () => {
     setSavingSocialLinks(true);
     try {
-      const { error } = await supabase
+      const { error } = await cms
         .from("site_settings")
         .upsert({ 
           key: "social_links", 
           value: JSON.stringify(socialLinks), 
           label: "Social Media Links",
-          updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
 
       if (error) throw error;
