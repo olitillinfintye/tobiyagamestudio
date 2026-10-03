@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { cms } from "@/integrations/cpanel/client";
 
-type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services';
+type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services' | 'products';
 
 interface UseAdminPermissionsReturn {
   permissions: AdminPermission[];
@@ -35,7 +35,7 @@ export function useAdminPermissions(): UseAdminPermissionsReturn {
 
         if (adminData?.is_super_admin) {
           setIsSuperAdmin(true);
-          setPermissions(['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics', 'users', 'services']);
+          setPermissions(['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics', 'users', 'services', 'products']);
         } else {
           setIsSuperAdmin(false);
           // Fetch specific permissions

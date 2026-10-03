@@ -42,7 +42,7 @@ const pillars = [
   },
 ];
 
-export default function About() {
+export default function About({ showObjectives = true }: { showObjectives?: boolean }) {
   return (
     <section id="about" aria-labelledby="about-heading" className="section-padding relative overflow-hidden">
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -61,7 +61,7 @@ export default function About() {
 
         {/* Mission & Vision — both use the primary tone; the previous gold/teal
             split assigned brand colour arbitrarily rather than semantically. */}
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-16 md:mb-20">
+        <div className={`grid md:grid-cols-2 gap-6 md:gap-8 ${showObjectives ? "mb-16 md:mb-20" : ""}`}>
           {pillars.map((pillar, index) => (
             <motion.div
               key={pillar.title}
@@ -83,7 +83,8 @@ export default function About() {
           ))}
         </div>
 
-        {/* Objectives */}
+        {/* Objectives — admins can hide these from Admin → Settings → Page Sections */}
+        {showObjectives && (
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -114,6 +115,7 @@ export default function About() {
             ))}
           </ul>
         </motion.div>
+        )}
       </div>
     </section>
   );

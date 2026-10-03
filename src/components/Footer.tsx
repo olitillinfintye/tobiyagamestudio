@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from "react";
 import { cms } from "@/integrations/cpanel/client";
 import { BrandLogo } from "./BrandLogo";
+import { useHiddenSections, type SectionId } from "@/lib/sections";
 
 interface SocialLink {
   platform: string;
@@ -24,11 +25,11 @@ interface SocialLink {
   icon: string;
 }
 
-const footerLinks = {
+const footerLinks: Record<string, { name: string; href: string; section?: SectionId }[]> = {
   Company: [
-    { name: "About Us", href: "/#about" },
-    { name: "Our Team", href: "/#team" },
-    { name: "Awards", href: "/#awards" },
+    { name: "About Us", href: "/#about", section: "about" },
+    { name: "Our Team", href: "/#team", section: "team" },
+    { name: "Awards", href: "/#awards", section: "awards" },
   ],
   Services: [
     { name: "Game Development", href: "/#services" },
@@ -36,9 +37,10 @@ const footerLinks = {
     { name: "Interactive Design", href: "/#services" },
   ],
   Work: [
-    { name: "All Projects", href: "/#works" },
-    { name: "Latest News", href: "/#blog" },
-    { name: "Start a Project", href: "/#contact" },
+    { name: "All Projects", href: "/projects" },
+    { name: "Products", href: "/products", section: "products" },
+    { name: "Latest News", href: "/#blog", section: "blog" },
+    { name: "Start a Project", href: "/#contact", section: "contact" },
   ],
 };
 
@@ -60,6 +62,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export default function Footer() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const { isHidden } = useHiddenSections();
 
   useEffect(() => {
     const fetchSocialLinks = async () => {
@@ -82,8 +85,8 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-card border-t border-border pt-14 md:pt-16 pb-8">
-      <div className="container mx-auto px-4">
+    <footer className="relative mt-10 border-t border-border bg-background/50 pb-8 pt-14 backdrop-blur-md md:pt-16">
+      <div className="container mx-auto px-5">
         {/* 2fr brand column with no max-width cap, so the grid does not leave
             a large dead gutter before the first link column. */}
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-12 mb-12">
@@ -95,7 +98,7 @@ export default function Footer() {
             >
               {/* Theme-aware: this was previously hardcoded to the white mark,
                   which made it invisible on the light-mode surface. */}
-              <BrandLogo className="h-14 md:h-16" />
+              <BrandLogo className="h-10 md:h-12" />
             </Link>
 
             <p className="mb-4 max-w-md text-sm md:text-base text-muted-foreground text-pretty">
@@ -120,7 +123,7 @@ export default function Footer() {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Tobiya Game Studio on ${link.platform}`}
-                        className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary transition-all duration-300 hover:bg-primary hover:text-primary-foreground focus-ring"
+                        className="vr-btn-ghost flex h-11 w-11 items-center justify-center rounded-xl text-primary transition-all duration-300 focus-ring"
                       >
                         <IconComponent className="h-5 w-5" />
                       </a>
@@ -135,12 +138,12 @@ export default function Footer() {
             <nav key={heading} aria-labelledby={`footer-${heading.toLowerCase()}`}>
               <h2
                 id={`footer-${heading.toLowerCase()}`}
-                className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground"
+                className="mono mb-4 text-primary"
               >
                 {heading}
               </h2>
               <ul className="space-y-1">
-                {links.map((link) => (
+                {links.filter((link) => !link.section || !isHidden(link.section)).map((link) => (
                   <li key={link.name}>
                     <a
                       href={link.href}
@@ -156,8 +159,8 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Tobiya Game Studio. All rights reserved.
+          <p className="mono text-muted-foreground">
+            © {new Date().getFullYear()} Tobiya Game Studio — Beyond the screen
           </p>
           <p className="text-sm text-muted-foreground">
             <a

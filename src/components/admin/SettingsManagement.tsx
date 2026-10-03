@@ -8,6 +8,7 @@ import { Save, RefreshCw, Upload, Box, Eye, Video, Link, Share2 } from "lucide-r
 import { ContactSettings } from "./ContactSettings";
 import { SocialLinksEditor, SocialLink } from "./SocialLinksEditor";
 import { NotificationRecipients } from "./NotificationRecipients";
+import { SectionVisibility } from "./SectionVisibility";
 
 // Lazy load the 3D preview component
 const Model3DPreview = lazy(() => import("@/components/Model3DPreview"));
@@ -243,6 +244,9 @@ export function SettingsManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Show / hide home-page sections */}
+      <SectionVisibility />
+
       {/* Contact Information Section */}
       <ContactSettings />
 

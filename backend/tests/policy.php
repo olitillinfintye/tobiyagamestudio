@@ -28,3 +28,17 @@ rejects(fn() => validateContact(['name' => 'Name', 'email' => 'bad', 'subject' =
 check(validateValue('url', '/uploads/project-images/demo.png') !== null, 'Local media URLs accepted');
 check(validateValue('strings', ['Unity', 'C#']) === '["Unity","C#"]', 'Array values preserve JSON');
 check(validateContact(['name' => ' Name ', 'email' => 'test@example.com', 'subject' => 'Hello', 'message' => str_repeat('a', 20)])['name'] === 'Name', 'Contact validation trims fields');
+$productEditor = ['id' => uuid(), 'is_super_admin' => false, 'permissions' => ['products']];
+check(readPolicy('products', null)[0]['value'] === 'published', 'Anonymous visitors only see published products');
+check(readPolicy('products', $productEditor) === [], 'Product editor can read drafts');
+authorizeWrite('products', $productEditor);
+check(true, 'Product editor can write products');
+rejects(fn() => authorizeWrite('products', $editor), 'Product writes require products permission');
+rejects(fn() => validateValue('status', 'archived'), 'Unknown product status rejected');
+check(validateRow('products', ['title' => 'Game', 'slug' => 'game', 'status' => 'published', 'platforms' => ['Quest', 'PC'], 'store_links' => [['platform' => 'steam', 'url' => 'https://store.steampowered.com/app/1']]])['status'] === 'published', 'Valid product accepted');
+rejects(fn() => validateRow('products', ['store_links' => [['platform' => 'steam', 'url' => 'javascript:alert(1)']]]), 'Product store link URLs validated');
+check(validateRow('projects', ['category' => 'mixed-reality'])['category'] === 'mixed-reality', 'Custom project categories accepted');
+rejects(fn() => validateRow('projects', ['category' => 'Bad Category!']), 'Category values must be slugs');
+rejects(fn() => authorizeWrite('project_categories', $editor), 'Category writes require projects permission');
+check(in_array('hidden_sections', readPolicy('site_settings', null)[0]['value'], true), 'Section visibility is public');
+check(in_array('objectives', hideableSections(), true), 'Objectives can be hidden');

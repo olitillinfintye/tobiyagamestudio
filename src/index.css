@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -100,58 +100,55 @@
     --sidebar-ring: 185 84% 26%;
   }
 
+  /* VR spatial theme — the public site is always dark (see App.tsx forcedTheme). */
   .dark {
-    --background: 230 50% 5%;
-    --foreground: 210 40% 98%;
-    --card: 230 45% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 230 45% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 185 80% 45%;
-    --primary-foreground: 230 50% 5%;
-    --secondary: 220 60% 15%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 230 30% 15%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 45 100% 50%;
-    --accent-foreground: 230 50% 5%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --background: 234 50% 4%;
+    --foreground: 213 100% 96%;
+    --card: 232 45% 8%;
+    --card-foreground: 213 100% 96%;
+    --popover: 232 45% 8%;
+    --popover-foreground: 213 100% 96%;
+    --primary: 184 87% 54%;
+    --primary-foreground: 190 80% 5%;
+    --secondary: 232 40% 13%;
+    --secondary-foreground: 213 100% 96%;
+    --muted: 232 30% 14%;
+    --muted-foreground: 223 24% 64%;
+    --accent: 41 100% 62%;
+    --accent-foreground: 40 100% 6%;
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 213 100% 96%;
 
-    --success: 152 55% 45%;
-    --success-foreground: 230 50% 5%;
-    --warning: 38 95% 55%;
-    --warning-foreground: 230 50% 5%;
+    --success: 152 60% 50%;
+    --success-foreground: 234 50% 4%;
+    --warning: 38 95% 58%;
+    --warning-foreground: 234 50% 4%;
 
-    /* Raised from 220 40% 18% (1.36:1). --input clears 3:1 against the card
-       surface; --border stays softer as a decorative edge. */
-    --border: 220 30% 32%;
-    --input: 220 30% 46%;
-    --ring: 185 80% 45%;
+    --border: 198 38% 21%;
+    --input: 195 40% 34%;
+    --ring: 184 87% 54%;
 
-    --teal: 185 80% 45%;
-    --gold: 45 100% 50%;
+    --teal: 184 87% 54%;
+    --gold: 41 100% 62%;
 
-    /* These were previously inherited from :root and carried light-mode values
-       into dark mode. They must be re-declared here. */
-    --gradient-primary: linear-gradient(135deg, hsl(185 80% 45%), hsl(220 70% 55%));
-    --gradient-hero: linear-gradient(180deg, hsl(230 50% 5%) 0%, hsl(220 70% 12%) 50%, hsl(230 50% 8%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(230 45% 10%), hsl(230 45% 6%));
-    --gradient-glow: radial-gradient(ellipse at center, hsl(185 80% 45% / 0.15), transparent 70%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 100% 50%), hsl(35 100% 45%));
+    --gradient-primary: linear-gradient(100deg, #ffffff 0%, #22e4f0 35%, #a78bfa 75%);
+    --gradient-hero: linear-gradient(180deg, #05060f 0%, #0a0d1f 50%, #05060f 100%);
+    --gradient-card: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.015));
+    --gradient-glow: radial-gradient(ellipse at center, rgba(34,228,240,.15), transparent 70%);
+    --gradient-gold: linear-gradient(135deg, #ffd166, #ffb020);
 
-    --shadow-glow: 0 0 30px hsl(185 80% 45% / 0.3);
-    --shadow-card: 0 10px 40px hsl(230 60% 2% / 0.5);
-    --shadow-button: 0 4px 20px hsl(185 80% 45% / 0.3);
+    --shadow-glow: 0 8px 30px rgba(34,228,240,.35);
+    --shadow-card: 0 20px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+    --shadow-button: 0 8px 30px rgba(34,228,240,.35);
 
-    --sidebar-background: 230 50% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 185 80% 45%;
-    --sidebar-primary-foreground: 230 50% 5%;
-    --sidebar-accent: 220 60% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 30% 28%;
-    --sidebar-ring: 185 80% 45%;
+    --sidebar-background: 234 50% 4%;
+    --sidebar-foreground: 213 100% 96%;
+    --sidebar-primary: 184 87% 54%;
+    --sidebar-primary-foreground: 234 50% 4%;
+    --sidebar-accent: 232 40% 13%;
+    --sidebar-accent-foreground: 213 100% 96%;
+    --sidebar-border: 198 38% 21%;
+    --sidebar-ring: 184 87% 54%;
   }
 }
 
@@ -172,18 +169,18 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
   }
 
   /* Orbitron is a display face: great at >=20px, unreadable at body sizes.
      h4-h6 are small by definition, so they use Inter. */
   h1, h2, h3 {
-    font-family: 'Orbitron', sans-serif;
-    @apply font-bold tracking-tight;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    @apply font-semibold tracking-tight;
   }
 
   h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
     @apply font-semibold tracking-normal;
   }
 }
@@ -191,7 +188,8 @@
 @layer components {
   /* Glass morphism card */
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/60 rounded-xl;
+    @apply backdrop-blur-xl border border-border rounded-2xl;
+    background: var(--gradient-card);
     box-shadow: var(--shadow-card);
   }
 

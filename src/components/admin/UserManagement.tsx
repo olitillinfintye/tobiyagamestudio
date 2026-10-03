@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Shield, User, Crown, Pencil, Check, X, Mail, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
-type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services';
+type AdminPermission = 'messages' | 'blog' | 'projects' | 'team' | 'awards' | 'settings' | 'analytics' | 'users' | 'services' | 'products';
 
 interface AdminUser {
   id: string;
@@ -49,6 +49,7 @@ const AVAILABLE_PERMISSIONS: { value: AdminPermission; label: string; descriptio
   { value: 'messages', label: 'Messages', description: 'View and manage contact messages' },
   { value: 'blog', label: 'Blog', description: 'Create, edit, and delete blog posts' },
   { value: 'projects', label: 'Projects', description: 'Manage portfolio projects' },
+  { value: 'products', label: 'Products', description: 'Create, edit, and publish products' },
   { value: 'team', label: 'Team', description: 'Manage team members' },
   { value: 'awards', label: 'Awards', description: 'Manage awards and achievements' },
   { value: 'services', label: 'Services', description: 'Manage services offered' },

@@ -15,6 +15,9 @@ cp "$private/config.php" "$release/config.php"
 if test -L "$private/current"; then readlink "$private/current" > "$backup/backend-target"; fi
 if test -d "$destination"; then tar --exclude='./uploads' -czf "$backup/site.tar.gz" -C "$destination" .; fi
 umask 022
+# Release files are unpacked privately (umask 077); make the public copies web-readable.
+find dist -type d -exec chmod 755 {} +
+find dist -type f -exec chmod 644 {} +
 mkdir -p "$destination"
 ln -s "$release" "$private/current-next"
 mv -Tf "$private/current-next" "$private/current"

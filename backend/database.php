@@ -167,10 +167,39 @@ function validateSetting(array $row): void
         if (!is_array($recipients) || !array_is_list($recipients) || count($recipients) > 20) throw new ApiFailure('Invalid recipients.');
         foreach ($recipients as $recipient) validateValue('email', $recipient);
     }
+    if ($key === 'hidden_sections') {
+        $sections = json_decode($value, true, 4, JSON_THROW_ON_ERROR);
+        if (!is_array($sections) || !array_is_list($sections)) throw new ApiFailure('Invalid hidden sections.');
+        foreach ($sections as $section) if (!in_array($section, hideableSections(), true)) throw new ApiFailure('Unknown section.');
+    }
     if ($key === 'social_links') {
         $links = json_decode($value, true, 16, JSON_THROW_ON_ERROR);
         if (!is_array($links)) throw new ApiFailure('Invalid social links.');
         foreach ($links as $link) validateValue('url', is_array($link) ? ($link['url'] ?? '') : $link);
+    }
+}
+
+function defaultProjectCategories(): array
+{
+    return ['vr' => 'VR', 'ar' => 'AR', 'interactive' => 'Interactive', 'award' => 'Awards'];
+}
+
+/** Brings an existing database up to date. Safe to run repeatedly. */
+function migrateSchema(PDO $db): void
+{
+    $db->exec(file_get_contents(__DIR__ . '/schema.sql'));
+    $column = fn(string $table, string $name) => execute($db, 'SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?', [$table, $name])->fetchColumn();
+    if ($column('projects', 'category') === 'enum') $db->exec("ALTER TABLE projects MODIFY category VARCHAR(100) NOT NULL DEFAULT 'interactive'");
+    if (!$column('projects', 'video_urls')) $db->exec('ALTER TABLE projects ADD COLUMN video_urls JSON NULL AFTER video_url');
+    seedProjectCategories($db);
+}
+
+function seedProjectCategories(PDO $db): void
+{
+    if (execute($db, 'SELECT COUNT(*) FROM project_categories')->fetchColumn() != 0) return;
+    $order = 0;
+    foreach (defaultProjectCategories() as $slug => $name) {
+        insertRow($db, 'project_categories', ['id' => uuid(), 'name' => $name, 'slug' => $slug, 'display_order' => $order++, 'created_at' => gmdate('c'), 'updated_at' => gmdate('c')]);
     }
 }
 

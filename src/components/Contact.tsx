@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cms, request } from "@/integrations/cpanel/client";
-import { SectionHeader } from "./SectionHeader";
 import { cn } from "@/lib/utils";
 
 interface ContactInfo {
@@ -157,192 +156,163 @@ export default function Contact() {
     ) : null;
 
   return (
-    <section
-      id="contact"
-      aria-labelledby="contact-heading"
-      className="section-padding relative bg-secondary/30"
-    >
-      <div className="absolute inset-0 grid-overlay opacity-20" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-
-      <div className="container mx-auto px-4 relative">
-        <SectionHeader
-          id="contact-heading"
-          eyebrow="Get in Touch"
-          title={
-            <>
-              Let's <span className="gradient-text">Connect</span>
-            </>
-          }
-          description="Ready to bring your XR vision to life? Let's discuss how we can create immersive experiences together."
-        />
-
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto items-start">
-          {/* Contact details */}
-          <motion.div
-            initial={{ opacity: 0, x: -32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6 md:space-y-8"
-          >
-            <div>
-              <h3 className="font-display text-display-md font-bold mb-3">Contact Information</h3>
-              <p className="text-muted-foreground text-pretty">
-                We're here to help and answer any questions you might have. We look forward to
-                hearing from you.
-              </p>
-            </div>
-
-            <ul className="space-y-4">
+    <section id="contact" aria-labelledby="contact-heading" className="section-padding relative">
+      <div className="container mx-auto grid items-stretch gap-6 px-5 lg:grid-cols-2 lg:gap-10">
+        {/* Portal + contact details */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
+          className="vr-portal flex min-h-[460px] flex-col justify-end p-7 sm:p-10"
+        >
+          <span className="p-ring s" aria-hidden="true" />
+          <span className="p-ring" aria-hidden="true" />
+          <div className="relative">
+            <span className="mono text-primary">Contact</span>
+            <h2 id="contact-heading" className="mt-3 text-[clamp(2.25rem,4.4vw,3.75rem)] font-semibold leading-none tracking-[-0.03em]">
+              Step through.
+              <br />
+              Let's build together.
+            </h2>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {contactInfo.map((info) => (
-                <li key={info.label} className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
-                    <info.icon className="w-5 h-5 text-primary" aria-hidden="true" />
+                <li key={info.label} className="flex min-w-0 items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
+                    <info.icon className="h-4 w-4 text-primary" aria-hidden="true" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm text-muted-foreground">{info.label}</span>
+                    <span className="mono block text-muted-foreground">{info.label}</span>
                     {info.href ? (
                       <a
                         href={info.href}
                         target={info.href.startsWith("http") ? "_blank" : undefined}
                         rel={info.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                        className="inline-block rounded py-1 font-medium hover:text-primary transition-colors focus-ring"
+                        className="break-words rounded text-sm font-medium transition-colors hover:text-primary focus-ring"
                       >
                         {info.value}
                       </a>
                     ) : (
-                      <span className="font-medium">{info.value}</span>
+                      <span className="break-words text-sm font-medium">{info.value}</span>
                     )}
                   </span>
                 </li>
               ))}
             </ul>
+          </div>
+        </motion.div>
 
-            <div className="glass-card overflow-hidden">
-              <iframe
-                src={MAP_EMBED_SRC}
-                title="Map showing Tobiya Game Studio at Creative Hub, Piyasa, Addis Ababa"
-                width="100%"
-                height="300"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                // Tones the bright Google tiles down to match the dark surface
-                className="rounded-xl dark:invert dark:hue-rotate-180 dark:brightness-95 dark:contrast-90"
-              />
+        {/* Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.2, 0.7, 0.2, 1] }}
+        >
+          {submitted ? (
+            <div className="glass-card flex h-full flex-col items-center justify-center p-8 text-center" role="status">
+              <CheckCircle2 className="mb-4 h-12 w-12 text-success" aria-hidden="true" />
+              <h3 className="mb-2 text-2xl font-semibold">Transmission received</h3>
+              <p className="mb-6 text-muted-foreground">Thanks for reaching out — we typically reply within two business days.</p>
+              <Button variant="outline" className="vr-btn-ghost" onClick={() => setSubmitted(false)}>
+                Send another message
+              </Button>
             </div>
-          </motion.div>
-
-          {/* Form — sticky so it tracks the taller details column instead of
-              leaving a large dead space at desktop. */}
-          <motion.div
-            initial={{ opacity: 0, x: 32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="lg:sticky lg:top-28"
-          >
-            {submitted ? (
-              <div className="glass-card p-8 text-center" role="status">
-                <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" aria-hidden="true" />
-                <h3 className="font-display text-display-sm font-bold mb-2">Message sent</h3>
-                <p className="text-muted-foreground mb-6">
-                  Thanks for reaching out — we typically reply within two business days.
-                </p>
-                <Button variant="outline" onClick={() => setSubmitted(false)}>
-                  Send another message
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} noValidate className="glass-card p-6 md:p-8 space-y-5">
-                <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <label htmlFor="name" className="mb-2 block text-sm font-medium">
-                      Your name
-                    </label>
-                    <Input
-                      id="name"
-                      autoComplete="name"
-                      placeholder="Abebe Bekele"
-                      aria-invalid={!!errors.name}
-                      aria-describedby={errors.name ? "name-error" : undefined}
-                      className={cn("bg-background/60", errors.name && "border-destructive")}
-                      {...register("name")}
-                    />
-                    <span id="name-error">{fieldError(errors.name?.message)}</span>
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                      Email address
-                    </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="you@company.com"
-                      aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? "email-error" : undefined}
-                      className={cn("bg-background/60", errors.email && "border-destructive")}
-                      {...register("email")}
-                    />
-                    <span id="email-error">{fieldError(errors.email?.message)}</span>
-                  </div>
-                </div>
-
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="glass-card grid h-full content-start gap-4 p-6 sm:p-10">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="subject" className="mb-2 block text-sm font-medium">
-                    Subject
+                  <label htmlFor="name" className="mono mb-2 block text-muted-foreground">
+                    Name
                   </label>
                   <Input
-                    id="subject"
-                    placeholder="Project inquiry"
-                    aria-invalid={!!errors.subject}
-                    aria-describedby={errors.subject ? "subject-error" : undefined}
-                    className={cn("bg-background/60", errors.subject && "border-destructive")}
-                    {...register("subject")}
+                    id="name"
+                    autoComplete="name"
+                    placeholder="Abebe Bekele"
+                    aria-invalid={!!errors.name}
+                    aria-describedby={errors.name ? "name-error" : undefined}
+                    className={cn("h-12 rounded-xl bg-background/60", errors.name && "border-destructive")}
+                    {...register("name")}
                   />
-                  <span id="subject-error">{fieldError(errors.subject?.message)}</span>
+                  <span id="name-error">{fieldError(errors.name?.message)}</span>
                 </div>
-
                 <div>
-                  <label htmlFor="message" className="mb-2 block text-sm font-medium">
-                    Message
+                  <label htmlFor="email" className="mono mb-2 block text-muted-foreground">
+                    Email
                   </label>
-                  <Textarea
-                    id="message"
-                    rows={5}
-                    placeholder="Tell us about your project, timeline, and what success looks like."
-                    aria-invalid={!!errors.message}
-                    aria-describedby={errors.message ? "message-error" : undefined}
-                    className={cn("resize-none bg-background/60", errors.message && "border-destructive")}
-                    {...register("message")}
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@company.com"
+                    aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? "email-error" : undefined}
+                    className={cn("h-12 rounded-xl bg-background/60", errors.email && "border-destructive")}
+                    {...register("email")}
                   />
-                  <span id="message-error">{fieldError(errors.message?.message)}</span>
+                  <span id="email-error">{fieldError(errors.email?.message)}</span>
                 </div>
+              </div>
 
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-12 w-full text-base font-semibold glow-primary"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
-                      Sending…
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-5 w-5" aria-hidden="true" />
-                      Send message
-                    </>
-                  )}
-                </Button>
-              </form>
-            )}
-          </motion.div>
+              <div>
+                <label htmlFor="subject" className="mono mb-2 block text-muted-foreground">
+                  Project type / subject
+                </label>
+                <Input
+                  id="subject"
+                  placeholder="VR experience, game, AR app…"
+                  aria-invalid={!!errors.subject}
+                  aria-describedby={errors.subject ? "subject-error" : undefined}
+                  className={cn("h-12 rounded-xl bg-background/60", errors.subject && "border-destructive")}
+                  {...register("subject")}
+                />
+                <span id="subject-error">{fieldError(errors.subject?.message)}</span>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="mono mb-2 block text-muted-foreground">
+                  Message
+                </label>
+                <Textarea
+                  id="message"
+                  rows={5}
+                  placeholder="Tell us about the world you want to build"
+                  aria-invalid={!!errors.message}
+                  aria-describedby={errors.message ? "message-error" : undefined}
+                  className={cn("resize-none rounded-xl bg-background/60", errors.message && "border-destructive")}
+                  {...register("message")}
+                />
+                <span id="message-error">{fieldError(errors.message?.message)}</span>
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="vr-btn-prime h-12 w-full rounded-xl text-base font-semibold">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Send transmission →
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+        </motion.div>
+
+        <div className="glass-card overflow-hidden lg:col-span-2">
+          <iframe
+            src={MAP_EMBED_SRC}
+            title="Map showing Tobiya Game Studio at Creative Hub, Piyasa, Addis Ababa"
+            width="100%"
+            height="260"
+            style={{ border: 0 }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="block invert hue-rotate-180 brightness-90 contrast-90"
+          />
         </div>
       </div>
     </section>

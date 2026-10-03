@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { cms } from "@/integrations/cpanel/client";
 import * as LucideIcons from "lucide-react";
 import { SectionHeader } from "./SectionHeader";
+import { useTilt } from "@/hooks/useTilt";
 
 interface Service {
   id: string;
@@ -75,79 +76,64 @@ const getIconComponent = (iconName: string) => iconMap[iconName] || LucideIcons.
 
 export default function Services() {
   const [services, setServices] = useState<Service[]>(fallbackServices);
+  const tilt = useTilt();
 
   useEffect(() => {
     const fetchServices = async () => {
-      const { data, error } = await cms
-        .from("services")
-        .select("*")
-        .order("display_order", { ascending: true });
-
+      const { data, error } = await cms.from("services").select("*").order("display_order", { ascending: true });
       if (!error && data && data.length > 0) setServices(data);
     };
-
     fetchServices();
   }, []);
 
   return (
-    <section
-      id="services"
-      aria-labelledby="services-heading"
-      className="section-padding relative bg-secondary/30"
-    >
-      <div className="absolute inset-0 grid-overlay opacity-30" />
-
-      <div className="container mx-auto px-4 relative">
+    <section id="services" aria-labelledby="services-heading" className="section-padding relative">
+      <div className="container mx-auto px-5">
         <SectionHeader
           id="services-heading"
-          eyebrow="What We Do"
+          eyebrow="Capabilities"
           title={
             <>
-              Our <span className="gradient-text">Services</span>
+              Built for every
+              <br />
+              <span className="gradient-text">reality.</span>
             </>
           }
-          description="At Tobiya, we design and develop a wide range of interactive experiences, including virtual reality, augmented reality, and mixed reality applications."
+          description="From the first prototype to launch, we design, build and ship experiences that people step into — not just look at."
         />
 
-        <ul className="grid md:grid-cols-2 gap-5 md:gap-8">
+        <ul className={`grid gap-[18px] sm:grid-cols-2 ${services.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
           {services.map((service, index) => {
             const IconComponent = getIconComponent(service.icon);
-
             return (
               <motion.li
                 key={service.id}
-                initial={{ opacity: 0, y: 32 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.5, delay: 0.1 * index }}
-                className="glass-card p-5 md:p-8 group hover:border-primary/50 transition-all duration-500 project-card"
+                transition={{ duration: 0.8, delay: (index % 4) * 0.08, ease: [0.2, 0.7, 0.2, 1] }}
               >
-                <div className="flex items-start gap-4 md:gap-6 h-full">
-                  <div className="service-icon shrink-0 w-12 h-12 md:w-14 md:h-14 group-hover:scale-110 transition-transform duration-300">
-                    <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-primary-foreground" />
+                <article {...tilt} className="vr-card flex h-full min-h-[300px] flex-col justify-between gap-8 p-7">
+                  <span className="mono absolute right-6 top-6 text-[#3b4766]" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="vr-icon">
+                    <IconComponent className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="mb-2.5 text-2xl font-semibold leading-tight">{service.title}</h3>
+                    <p className="text-[14.5px] leading-relaxed text-muted-foreground text-pretty">{service.description}</p>
+                    {service.features?.length > 0 && (
+                      <ul className="mt-4 flex flex-wrap gap-1.5">
+                        {service.features.map((feature) => (
+                          <li key={feature} className="mono rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] text-primary">
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-
-                  {/* flex column + mt-auto pins the feature pills to the card
-                      bottom so they align across a row of uneven descriptions */}
-                  <div className="min-w-0 flex flex-col h-full">
-                    <h3 className="font-display text-display-sm font-bold mb-2 md:mb-3">
-                      {service.title}
-                    </h3>
-                    <p className="text-sm md:text-base text-muted-foreground mb-4 leading-relaxed text-pretty">
-                      {service.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mt-auto pt-1">
-                      {service.features?.map((feature) => (
-                        <span
-                          key={feature}
-                          className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                </article>
               </motion.li>
             );
           })}

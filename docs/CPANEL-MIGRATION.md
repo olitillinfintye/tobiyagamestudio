@@ -1,6 +1,6 @@
 # cPanel CMS Migration
 
-Status: a fresh cPanel installation is deployed at https://tobiyastudio.com with 14 MariaDB tables and no imported Supabase content. The live API connection, anonymous read restrictions and CSRF checks passed. Initial admin password setup and SMTP delivery acceptance remain outstanding. GitHub automatic deployment has not been enabled or verified.
+Status: a fresh cPanel installation is deployed at https://tobiyastudio.com with 14 MariaDB tables and no imported Supabase content. Admin password setup, authenticated content and user management, image uploads, anonymous read restrictions, and CSRF checks passed. Contact notifications and password-recovery emails reached the administrator's inbox. All 14 MariaDB integration checks passed in a separate disposable database; its database, user, credentials, and one-time cron were removed afterwards. Test content was removed from production, and the permanent mail worker runs every minute. GitHub automatic deployment has not been enabled or verified.
 
 ## Architecture
 
@@ -23,6 +23,12 @@ For hosting without an interactive terminal, a one-time private Cron Job can run
 5. Set `TOBIYA_BACKEND` to the absolute path of `backend/api.php`. Start `php -S 127.0.0.1:8081 -t public`, then `npm run dev`. Vite proxies API and uploads to PHP.
 
 Never use the PHP development server on a public network. Passwords are 12-72 bytes; existing imported admins receive unusable random password hashes and must reset their passwords.
+
+## Upgrading an Existing Installation
+
+When a release changes the database (for example adding `products`, `project_categories` or project `video_urls`), deploy the backend code first, then run `php backend/console.php migrate` through the hosting CLI or a one-time private Cron Job. It creates missing tables, converts the project category column from a fixed list to free text, adds missing columns and seeds the default project categories (VR, AR, Interactive, Awards) if none exist. Existing data is kept and the command is safe to run more than once.
+
+The site's database user only has SELECT, INSERT, UPDATE and DELETE, so `migrate` cannot run with `config.php` as-is (it fails with "CREATE command denied"). Create a temporary MySQL user in cPanel with ALL PRIVILEGES on the CMS database, run the migration with those credentials (for example via a private one-off script that overrides `db_user`/`db_password` from `configuration()`), then delete the temporary user. Do not grant extra privileges to the site's user. Super admins get new permissions automatically; grant `Products` to other admins under Admin → Users.
 
 ## Export and Import
 
@@ -67,4 +73,4 @@ composer audit --working-dir=backend
 npm run build
 ```
 
-Database integration tests require a disposable, empty `tobiya_test` database and `TOBIYA_TEST_DSN`, `TOBIYA_TEST_USER`, and `TOBIYA_TEST_PASSWORD`. Run `php backend/tests/integration.php`. Tests intentionally leave their database intact for inspection and refuse a nonempty database on rerun. CI provisions its own MariaDB service.
+Database integration tests require a disposable, empty `tobiya_test` database (a cPanel account prefix is allowed) and `TOBIYA_TEST_DSN`, `TOBIYA_TEST_USER`, and `TOBIYA_TEST_PASSWORD`. Run `php backend/tests/integration.php`. Tests intentionally leave their database intact for inspection and refuse a nonempty database on rerun. CI provisions its own MariaDB service.

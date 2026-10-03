@@ -1,74 +1,54 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ThemeToggle } from "./ThemeToggle";
+import { Link, useLocation } from "react-router-dom";
 import { BrandLogo } from "./BrandLogo";
 import { cn } from "@/lib/utils";
+import { useHiddenSections, type SectionId } from "@/lib/sections";
 
-const navLinks = [
-  { name: "Home", href: "/", id: "home" },
+const allNavLinks: { name: string; href: string; id: string }[] = [
+  { name: "Studio", href: "/", id: "home" },
   { name: "About", href: "/#about", id: "about" },
   { name: "Services", href: "/#services", id: "services" },
   { name: "Works", href: "/#works", id: "works" },
+  { name: "Products", href: "/products", id: "products" },
   { name: "Team", href: "/#team", id: "team" },
   { name: "Contact", href: "/#contact", id: "contact" },
 ];
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const { pathname } = useLocation();
+  const { isHidden } = useHiddenSections();
+  const navLinks = allNavLinks.filter((l) => l.id === "home" || !isHidden(l.id as SectionId));
+  const current = pathname.startsWith("/products") ? "products" : pathname.startsWith("/projects") ? "works" : pathname === "/" ? activeSection : "";
 
+  // Scroll spy: the home page is a single page, so the nav reports position.
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Scroll spy: the site is a single page, so the nav should report position.
-  useEffect(() => {
-    const ids = navLinks.map((l) => l.id).filter((id) => id !== "home");
-    const sections = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
-
+    const ids = allNavLinks.map((l) => l.id).filter((id) => id !== "home" && id !== "products");
+    const sections = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
     if (sections.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-
-        if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
-        } else if (window.scrollY < 200) {
-          setActiveSection("home");
-        }
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible.length > 0) setActiveSection(visible[0].target.id);
+        else if (window.scrollY < 200) setActiveSection("home");
       },
-      // Bias the band towards the upper half so the active link changes as a
-      // section's heading reaches reading position, not when it fully fills.
       { rootMargin: "-20% 0px -60% 0px", threshold: [0.1, 0.5, 1] },
     );
-
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
-  }, []);
+  }, [pathname]);
 
   // Escape to close, and lock body scroll while the drawer is open.
   useEffect(() => {
     if (!isMobileMenuOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsMobileMenuOpen(false);
-    };
-
+    const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && setIsMobileMenuOpen(false);
     document.addEventListener("keydown", onKeyDown);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
@@ -77,7 +57,7 @@ export default function Navbar() {
 
   // Close the drawer if the viewport grows past the mobile breakpoint.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
+    const mq = window.matchMedia("(min-width: 1024px)");
     const onChange = (e: MediaQueryListEvent) => e.matches && setIsMobileMenuOpen(false);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -86,97 +66,72 @@ export default function Navbar() {
   return (
     <>
       <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         aria-label="Main"
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          isScrolled || isMobileMenuOpen
-            ? "bg-background/90 backdrop-blur-xl border-b border-border/60 shadow-lg"
-            : "bg-transparent",
-        )}
+        className="vr-dock fixed inset-x-0 top-4 z-50 mx-auto flex w-[min(1200px,calc(100%-2rem))] items-center justify-between rounded-[18px] py-2 pl-5 pr-2"
       >
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo — sized to sit inside the 80px bar, not overflow it */}
-          <Link
-            to="/"
-            className="flex items-center rounded-md focus-ring"
-            aria-label="Tobiya Game Studio — home"
-          >
-            <BrandLogo className="h-10 md:h-12 transition-transform duration-300 hover:scale-105" />
-          </Link>
+        <Link to="/" className="flex items-center rounded-md focus-ring" aria-label="Tobiya Game Studio — home">
+          <BrandLogo className="h-8 md:h-9" />
+        </Link>
 
-          {/* Desktop navigation */}
-          <div className="hidden md:flex items-center gap-1 lg:gap-2">
-            {navLinks.map((link) => (
+        <ul className="hidden items-center gap-1 lg:flex">
+          {navLinks.map((link) => (
+            <li key={link.name}>
               <a
-                key={link.name}
                 href={link.href}
-                data-active={activeSection === link.id}
-                aria-current={activeSection === link.id ? "true" : undefined}
-                className={cn(
-                  // py-3 keeps the hit area at the 44px target size
-                  "hover-underline inline-flex min-h-[44px] items-center rounded-md px-3 py-3 text-sm font-medium transition-colors duration-300 focus-ring",
-                  activeSection === link.id
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-primary",
-                )}
+                data-active={current === link.id}
+                aria-current={current === link.id ? "true" : undefined}
+                className="vr-dock-link inline-flex min-h-[40px] items-center whitespace-nowrap rounded-[10px] px-4 text-sm text-muted-foreground transition-all focus-ring"
               >
                 {link.name}
               </a>
-            ))}
-            <span className="ml-2">
-              <ThemeToggle />
-            </span>
-          </div>
+            </li>
+          ))}
+        </ul>
 
-          {/* Mobile controls */}
-          <div className="md:hidden flex items-center gap-1">
-            <ThemeToggle />
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen((open) => !open)}
-              aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={isMobileMenuOpen}
-              aria-controls="mobile-nav"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-md text-foreground focus-ring"
-            >
-              {isMobileMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <a
+            href="/#contact"
+            className="vr-btn-prime hidden h-11 items-center rounded-xl px-5 text-sm font-semibold sm:inline-flex focus-ring"
+          >
+            Start a project →
+          </a>
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
+            className="vr-btn-ghost inline-flex h-11 w-11 items-center justify-center rounded-xl lg:hidden focus-ring"
+          >
+            {isMobileMenuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+          </button>
         </div>
-      </div>
       </motion.nav>
 
-      {/* Mobile drawer.
-          Rendered as a sibling of <motion.nav>, not a child: framer-motion applies
-          a transform to the nav, and a transformed ancestor becomes the containing
-          block for position:fixed descendants — which collapsed this drawer to 1px. */}
+      {/* Rendered as a sibling of the nav: framer-motion transforms the nav, and a
+          transformed ancestor would become the containing block for this fixed panel. */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             id="mobile-nav"
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="md:hidden fixed inset-x-0 top-20 bottom-0 z-40 bg-background border-t border-border overflow-y-auto"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="vr-dock fixed inset-x-4 top-[84px] z-40 max-h-[calc(100svh-100px)] overflow-y-auto rounded-2xl p-2 lg:hidden"
           >
-            <nav aria-label="Mobile" className="container mx-auto px-4 py-2 flex flex-col">
+            <nav aria-label="Mobile" className="flex flex-col">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  aria-current={activeSection === link.id ? "true" : undefined}
-                  className={cn(
-                    "rounded-md border-b border-border/40 px-2 py-4 text-lg font-medium transition-colors focus-ring",
-                    activeSection === link.id
-                      ? "text-primary"
-                      : "text-foreground hover:text-primary",
-                  )}
+                  data-active={current === link.id}
+                  aria-current={current === link.id ? "true" : undefined}
+                  className={cn("vr-dock-link rounded-xl px-4 py-3.5 text-base font-medium text-foreground/90 focus-ring")}
                 >
                   {link.name}
                 </a>
@@ -184,9 +139,9 @@ export default function Navbar() {
               <a
                 href="/#contact"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="mt-6 inline-flex h-12 items-center justify-center rounded-md bg-primary px-6 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-ring"
+                className="vr-btn-prime mt-2 inline-flex h-12 items-center justify-center rounded-xl text-base font-semibold focus-ring"
               >
-                Start a project
+                Start a project →
               </a>
             </nav>
           </motion.div>

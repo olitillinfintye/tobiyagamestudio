@@ -1,218 +1,173 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCallback, useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
-
-interface Project {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  short_description: string | null;
-  full_description?: string | null;
-  cover_image_url: string | null;
-  gallery_images?: string[] | null;
-  video_url: string | null;
-  tools_used: string[] | null;
-  project_link: string | null;
-  featured: boolean | null;
-}
+import { ExternalLink, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { getEmbedUrl } from "@/lib/products";
+import { normaliseTools, projectMedia, type Media, type Project } from "@/lib/projects";
+import { cn } from "@/lib/utils";
 
 interface ProjectDetailDialogProps {
   project: Project | null;
+  categoryLabel?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function ProjectDetailDialog({ project, open, onOpenChange }: ProjectDetailDialogProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
+function Slide({ media, title, index }: { media: Media; title: string; index: number }) {
+  if (media.type === "image") {
+    return <img src={media.src} alt={`${title} — image ${index + 1}`} className="h-full w-full object-contain bg-black" />;
+  }
+  const embed = getEmbedUrl(media.src);
+  return embed.kind === "iframe" ? (
+    <iframe
+      src={embed.src}
+      className="h-full w-full"
+      allowFullScreen
+      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+      title={`${title} — video`}
+    />
+  ) : (
+    <video src={embed.src} className="h-full w-full bg-black" controls playsInline title={`${title} — video`} />
+  );
+}
+
+function youtubeThumb(src: string) {
+  const embed = getEmbedUrl(src);
+  const id = embed.src.match(/youtube\.com\/embed\/([^?&]+)/)?.[1];
+  return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
+}
+
+export default function ProjectDetailDialog({ project, categoryLabel, open, onOpenChange }: ProjectDetailDialogProps) {
+  const [current, setCurrent] = useState(0);
+  const media = project ? projectMedia(project) : [];
+  const count = media.length;
+
+  useEffect(() => setCurrent(0), [project?.id]);
+
+  const go = useCallback((delta: number) => count && setCurrent((i) => (i + delta + count) % count), [count]);
 
   if (!project) return null;
-
-  // Combine cover image with gallery images for carousel
-  const allImages = [
-    ...(project.cover_image_url ? [project.cover_image_url] : []),
-    ...(project.gallery_images || []),
-  ];
-
-  const hasMultipleImages = allImages.length > 1;
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + allImages.length) % allImages.length);
-  };
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setCurrentSlide(0);
-    }
-    onOpenChange(isOpen);
-  };
+  const tools = normaliseTools(project.tools_used);
+  // Collapse runs of blank lines pasted in from editors.
+  const description = (project.full_description || project.short_description || "").replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
-        {/* Hero Image Carousel */}
-        <div className="relative h-48 sm:h-64 md:h-80 overflow-hidden">
-          {allImages.length > 0 ? (
-            <>
-              <img
-                src={allImages[currentSlide]}
-                alt={`${project.title} - Image ${currentSlide + 1}`}
-                className="w-full h-full object-cover transition-opacity duration-300"
-              />
-              
-              {/* Navigation Arrows */}
-              {hasMultipleImages && (
-                <>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 hover:bg-background shadow-lg z-10"
-                    onClick={prevSlide}
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 hover:bg-background shadow-lg z-10"
-                    onClick={nextSlide}
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
-                </>
-              )}
-              
-              {/* Slide Counter */}
-              {hasMultipleImages && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/80 px-3 py-1 rounded-full text-sm font-medium z-10">
-                  {currentSlide + 1} / {allImages.length}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary flex items-center justify-center">
-              <span className="text-4xl font-display text-primary/50">{project.title[0]}</span>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="block max-w-5xl w-[calc(100vw-1.5rem)] max-h-[92vh] overflow-y-auto p-0"
+        onKeyDown={(e) => {
+          if ((e.target as HTMLElement).closest("input, textarea, iframe, video")) return;
+          if (e.key === "ArrowRight") go(1);
+          if (e.key === "ArrowLeft") go(-1);
+        }}
+      >
+        {/* Media stage. Padded so the dialog's close button and the slider controls
+            never sit on top of the video player's own controls. */}
+        <header className="flex items-center gap-3 px-4 pb-4 pr-14 pt-5 sm:px-6 sm:pr-16">
+          {categoryLabel && (<Badge variant="secondary" className="mono shrink-0">{categoryLabel}</Badge>)}
+          <DialogTitle className="min-w-0 truncate font-display text-xl font-semibold sm:text-2xl">{project.title}</DialogTitle>
+        </header>
+
+        <div className="px-4 sm:px-6">
+          <div className="relative aspect-video overflow-hidden rounded-xl border border-border/60 bg-black">
+            {count > 0 ? (
+              // Keyed so a playing video stops when the slide changes
+              <Slide key={current} media={media[current]} title={project.title} index={current} />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-secondary">
+                <span className="font-display text-5xl text-primary/50" aria-hidden="true">{project.title[0]}</span>
+              </div>
+            )}
+          </div>
+
+          {count > 1 && (
+            <div className="mt-3 flex items-center gap-2 sm:gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0 rounded-full"
+                aria-label="Previous slide"
+                title="Previous slide"
+                onClick={() => go(-1)}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+
+              <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto py-1">
+                {media.map((m, idx) => {
+                  const thumb = m.type === "image" ? m.src : youtubeThumb(m.src);
+                  return (
+                    <button
+                      key={`${m.src}-${idx}`}
+                      type="button"
+                      onClick={() => setCurrent(idx)}
+                      aria-label={`Show ${m.type} ${idx + 1}`}
+                      aria-current={idx === current}
+                      className={cn(
+                        "relative h-14 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all focus-ring sm:h-16 sm:w-28",
+                        idx === current ? "border-primary" : "border-transparent opacity-60 hover:opacity-100",
+                      )}
+                    >
+                      {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <span className="block h-full w-full bg-secondary" />}
+                      {m.type === "video" && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <Play className="h-5 w-5 text-white" aria-hidden="true" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <span className="mono shrink-0 text-muted-foreground" aria-live="polite">
+                {current + 1}/{count}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0 rounded-full"
+                aria-label="Next slide"
+                title="Next slide"
+                onClick={() => go(1)}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent pointer-events-none" />
-          
-          {/* Category Badge */}
-          <div className="absolute top-4 left-4 z-10">
-            <Badge variant="secondary" className="capitalize">
-              {project.category}
-            </Badge>
-          </div>
         </div>
+        <div className="px-4 pb-7 pt-6 sm:px-6 sm:pb-8">
+          {description ? (
+            <DialogDescription asChild>
+              <div className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed text-muted-foreground">{description}</div>
+            </DialogDescription>
+          ) : (
+            <DialogDescription className="sr-only">Project details</DialogDescription>
+          )}
 
-        <div className="p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl sm:text-2xl md:text-3xl font-bold">
-              {project.title}
-            </DialogTitle>
-          </DialogHeader>
+          {tools.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold mb-2">Tools &amp; Technologies</h3>
+              <ul className="flex flex-wrap gap-2">
+                {tools.map((tool) => (
+                  <li key={tool}>
+                    <Badge variant="outline" className="text-xs">{tool}</Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-          {/* Description */}
-          <div className="mt-4 space-y-4">
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-              {project.full_description || project.short_description}
-            </p>
-
-            {/* Tools Used */}
-            {project.tools_used && project.tools_used.length > 0 && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Tools & Technologies</h4>
-                <div className="flex flex-wrap gap-2">
-                  {project.tools_used.map((tool) => (
-                    <Badge key={tool} variant="outline" className="text-xs">
-                      {tool}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Thumbnail Gallery Strip */}
-            {hasMultipleImages && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Gallery</h4>
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {allImages.map((img, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setCurrentSlide(idx)}
-                      className={`relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border-2 transition-all ${
-                        idx === currentSlide 
-                          ? "border-primary ring-2 ring-primary/30" 
-                          : "border-transparent opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <img 
-                        src={img} 
-                        alt={`Thumbnail ${idx + 1}`} 
-                        className="w-full h-full object-cover" 
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Video */}
-            {project.video_url && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Video</h4>
-                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                  {project.video_url.includes('youtube.com') || project.video_url.includes('youtu.be') ? (
-                    <iframe
-                      src={project.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                      className="w-full h-full"
-                      allowFullScreen
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      title={project.title}
-                    />
-                  ) : project.video_url.includes('vimeo.com') ? (
-                    <iframe
-                      src={project.video_url.replace('vimeo.com/', 'player.vimeo.com/video/').split('?')[0]}
-                      className="w-full h-full"
-                      allowFullScreen
-                      allow="autoplay; fullscreen; picture-in-picture"
-                      title={project.title}
-                    />
-                  ) : (
-                    <video
-                      src={project.video_url}
-                      className="w-full h-full"
-                      controls
-                      title={project.title}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Project Link */}
-            {project.project_link && (
-              <Button asChild className="w-full sm:w-auto mt-4">
-                <a
-                  href={project.project_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2"
-                >
-                  View Live Project <ExternalLink className="w-4 h-4" />
-                </a>
-              </Button>
-            )}
-          </div>
+          {project.project_link && (
+            <Button asChild className="mt-6 w-full sm:w-auto">
+              <a href={project.project_link} target="_blank" rel="noopener noreferrer">
+                View live project <ExternalLink className="w-4 h-4 ml-2" aria-hidden="true" />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { cms } from "@/integrations/cpanel/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase, Handshake } from "lucide-react";
+import { LogOut, ArrowLeft, Layers, Users, Trophy, Settings, BarChart3, Mail, FileText, UserCog, Briefcase, Handshake, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import AdminAuth, { type AuthMode } from "@/components/admin/AdminAuth";
 import { isPasswordRecoveryLink } from "@/lib/recoveryLink";
 import { ProjectsManagement } from "@/components/admin/ProjectsManagement";
+import { ProductsManagement } from "@/components/admin/ProductsManagement";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { AwardsManagement } from "@/components/admin/AwardsManagement";
 import { SettingsManagement } from "@/components/admin/SettingsManagement";
@@ -25,6 +26,26 @@ export default function Admin() {
   const [authMode, setAuthMode] = useState<AuthMode>(
     isPasswordRecoveryLink ? "reset" : "login",
   );
+
+  useEffect(() => {
+    // Keep the admin out of search results even if someone links to it.
+    let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const created = !robots;
+    const previousRobots = robots?.content;
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex, nofollow";
+    const previousTitle = document.title;
+    document.title = "Admin — Tobiya Game Studio";
+    return () => {
+      if (created) robots?.remove();
+      else if (robots && previousRobots !== undefined) robots.content = previousRobots;
+      document.title = previousTitle;
+    };
+  }, []);
 
   useEffect(() => {
     cms.auth.getSession().then(({ data: { session } }) => {
@@ -143,8 +164,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </Button>
         </div>
 
-        <Tabs defaultValue={["analytics", "messages", "projects", "team", "awards", "blog", "services", "settings"].find(hasPermission) ?? "users"} className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-5 sm:grid-cols-10 gap-1 h-auto p-1">
+        <Tabs defaultValue={        ["analytics", "messages", "projects", "products", "team", "awards", "blog", "services", "settings"].find(hasPermission) ?? "users"} className="space-y-4 sm:space-y-6">
+                  <TabsList className="grid w-full grid-cols-4 sm:grid-cols-6 lg:grid-cols-11 gap-1 h-auto p-1">
             {hasPermission('analytics') && (
               <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
                 <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -179,6 +200,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
                 <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Projects</span>
+              </TabsTrigger>
+            )}
+            {hasPermission('products') && (
+              <TabsTrigger value="products" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-1.5">
+                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Products</span>
               </TabsTrigger>
             )}
             {hasPermission('team') && (
@@ -240,6 +267,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {hasPermission('projects') && (
             <TabsContent value="projects">
               <ProjectsManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('products') && (
+            <TabsContent value="products">
+              <ProductsManagement />
             </TabsContent>
           )}
 

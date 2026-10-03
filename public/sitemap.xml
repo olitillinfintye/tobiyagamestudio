@@ -42,6 +42,22 @@
     <priority>0.95</priority>
   </url>
   
+  <!-- All projects -->
+  <url>
+    <loc>https://tobiyagamestudio.lovable.app/projects</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Products - Games & apps -->
+  <url>
+    <loc>https://tobiyagamestudio.lovable.app/products</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
   <!-- Team -->
   <url>
     <loc>https://tobiyagamestudio.lovable.app/#team</loc>

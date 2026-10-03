@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tobiya | Design Concept</title>
+  <style>
+    @font-face { font-family:'Nexa Display'; src:local('Nexa Heavy'); font-weight:900; }
+    @font-face { font-family:'Nexa Body'; src:local('Nexa Bold'); font-weight:700; }
+    @font-face { font-family:'Nexa Body'; src:local('Nexa Regular'); font-weight:400; }
+    @font-face { font-family:'Nexa Body'; src:local('Nexa Light'); font-weight:300; }
+    :root { --white:#ffffff; --navy:#080374; --red:#990000; --deep:#262185; --canvas:#f5f5f9; --muted:#5e5ba5; --border:#dcdcec; --night:#00000a; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:96px; }
+    body { margin:0; background:var(--white); color:var(--navy); font-family:'Nexa Body',system-ui,-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:16px; font-weight:300; letter-spacing:0; }
+    h1,h2 { font-family:'Nexa Display',system-ui,-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif; }
+    a { color:inherit; text-decoration:none; }
+    a:focus-visible,summary:focus-visible { outline:2px solid var(--red); outline-offset:6px; }
+    .container { width:min(1200px,calc(100% - 48px)); margin-inline:auto; }
+    header { position:sticky; top:0; z-index:10; background:var(--white); border-bottom:1px solid var(--border); }
+    .navigation { height:80px; display:flex; align-items:center; justify-content:space-between; gap:32px; }
+    .brand { display:flex; align-items:center; }
+    .brand img { width:144px; height:56px; object-fit:contain; }
+    nav { display:flex; align-items:center; gap:32px; font-size:14px; font-weight:400; }
+    nav a:hover,.footer-links a:hover { color:var(--deep); text-decoration:underline; text-underline-offset:8px; }
+    .talk { height:40px; padding:0 16px; display:inline-flex; align-items:center; gap:24px; border:1px solid var(--border); border-radius:8px; }
+    .mobile-menu { display:none; }
+    .hero { height:576px; position:relative; isolation:isolate; overflow:hidden; background:var(--night); color:var(--white); }
+    .art { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:calc(50% + 200px) center; filter:grayscale(1); -webkit-mask-image:linear-gradient(to right,transparent 12%,black 52%); mask-image:linear-gradient(to right,transparent 12%,black 52%); z-index:-1; }
+    .hero-inner { height:100%; display:flex; flex-direction:column; justify-content:center; position:relative; }
+    .hero-copy { max-width:424px; padding-bottom:32px; }
+    .eyebrow,.section-label,.number,.hero-foot,.coordinate { font-size:12px; font-weight:400; line-height:1.5; }
+    .eyebrow { display:flex; align-items:center; gap:16px; margin:0 0 24px; }
+    .eyebrow::before { content:''; width:32px; height:1px; background:var(--border); }
+    h1 { font-size:38px; line-height:1.2; font-weight:900; margin:0 0 24px; }
+    .promise { font-size:26px; font-weight:700; line-height:1.3; margin:0 0 16px; max-width:360px; }
+    .hero-description { max-width:344px; font-size:16px; line-height:1.6; color:var(--border); margin:0 0 32px; }
+    .primary { display:inline-flex; align-items:center; justify-content:center; gap:24px; min-height:48px; padding:8px 24px; background:var(--red); color:var(--white); border-radius:8px; font-size:14px; font-weight:400; }
+    .primary:hover { background:var(--navy); }
+    .hero-foot { position:absolute; inset:auto 0 24px; display:flex; justify-content:space-between; gap:24px; color:var(--border); }
+    .coordinate { position:absolute; right:0; top:48px; font-family:SFMono-Regular,Consolas,'Liberation Mono',Menlo,Courier,monospace; color:var(--border); text-align:right; line-height:2; }
+    .strip { background:var(--canvas); border-bottom:1px solid var(--border); }
+    .strip-inner { min-height:80px; display:flex; align-items:center; justify-content:space-between; gap:24px; font-size:14px; font-weight:400; }
+    .strip span { display:flex; align-items:center; gap:16px; }
+    .strip small { color:var(--muted); font-size:12px; white-space:nowrap; }
+    .studio { padding-block:80px; }
+    .section-top { display:grid; grid-template-columns:1fr 2fr; gap:48px; margin-bottom:64px; }
+    .section-label { color:var(--muted); display:flex; gap:24px; margin:8px 0 0; }
+    h2 { margin:0; font-size:32px; line-height:1.25; font-weight:900; }
+    .section-top p:not(.section-label) { max-width:592px; line-height:1.75; color:var(--muted); margin:24px 0 0; }
+    .services { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid var(--border); }
+    .service { padding:32px 32px 0 0; }
+    .service + .service { padding-left:32px; border-left:1px solid var(--border); }
+    .number { color:var(--muted); }
+    .service h3 { font-size:26px; font-weight:700; line-height:1.3; margin:32px 0 16px; }
+    .service p { color:var(--muted); font-size:14px; line-height:1.75; margin:0; }
+    .service-tags { margin-top:24px; font-size:12px; font-weight:400; line-height:1.75; }
+    .pillars { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-bottom:64px; }
+    .pillar { border-top:1px solid var(--border); padding-top:32px; }
+    .pillar h3,.objective h3 { font-size:26px; line-height:1.3; font-weight:700; margin:16px 0; }
+    .pillar p,.objective p { color:var(--muted); font-size:14px; line-height:1.75; margin:0; }
+    .objectives { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:32px; margin-top:32px; }
+    .objective { border-top:1px solid var(--border); padding-top:24px; }
+    .expertise { padding-block:80px; background:var(--canvas); border-block:1px solid var(--border); }
+    .expertise .services { grid-template-columns:1fr 1fr; gap:32px; border:0; }
+    .expertise .service,.expertise .service + .service { padding:32px; border:1px solid var(--border); border-radius:8px; background:var(--white); }
+    .expertise .service h3 { margin-top:16px; }
+    .awards { padding-block:80px; }
+    .award-list { list-style:none; padding:0; margin:0; border-top:1px solid var(--border); }
+    .award-list li { display:grid; grid-template-columns:96px 1fr; gap:32px; padding:24px 0; border-bottom:1px solid var(--border); }
+    .award-list time { color:var(--muted); font-size:14px; padding-top:8px; }
+    .award-list h3 { font-size:26px; font-weight:700; line-height:1.3; margin:0 0 8px; }
+    .award-list p { color:var(--muted); font-size:14px; line-height:1.75; margin:0; }
+    .achievement { margin-top:32px; padding-left:24px; border-left:1px solid var(--border); }
+    .achievement p { font-size:12px; color:var(--muted); margin:0 0 8px; }
+    .achievement strong { font-size:16px; font-weight:700; }
+    .contact { background:var(--canvas); border-block:1px solid var(--border); padding-block:80px; }
+    .contact-inner { display:grid; grid-template-columns:1fr 2fr; gap:48px; }
+    .contact h2 { margin-bottom:24px; }
+    .contact p:not(.section-label) { color:var(--muted); line-height:1.75; margin:0 0 32px; }
+    footer .container { min-height:104px; display:flex; justify-content:space-between; align-items:center; gap:32px; font-size:12px; color:var(--muted); }
+    footer img { width:112px; height:48px; object-fit:contain; }
+    .footer-links { display:flex; gap:24px; }
+    @media(max-width:1024px) {
+      .studio,.contact,.expertise,.awards { padding-block:48px; }
+      .objectives { grid-template-columns:1fr 1fr; }
+      .section-top,.contact-inner { grid-template-columns:1fr 2fr; gap:32px; }
+      .service { padding-right:16px; } .service + .service { padding-left:16px; }
+      .art { object-position:calc(50% + 160px) center; }
+    }
+    @media(max-width:760px) {
+      html { scroll-padding-top:80px; }
+      .navigation { height:64px; } .brand img { width:120px; height:48px; } .desktop-nav { display:none; }
+      .mobile-menu { display:block; }
+      summary { list-style:none; width:40px; height:40px; border:1px solid var(--border); border-radius:8px; display:grid; place-content:center; gap:4px; cursor:pointer; }
+      summary::-webkit-details-marker { display:none; }
+      summary span { display:block; height:1px; width:16px; background:var(--navy); }
+      .mobile-menu nav { position:absolute; right:0; top:64px; width:min(320px,100%); padding:24px; background:var(--white); border:1px solid var(--border); border-radius:0 0 10px 10px; flex-direction:column; align-items:stretch; gap:24px; }
+      .hero { height:640px; }
+      .hero-inner { justify-content:flex-start; padding-top:32px; }
+      .hero-copy { padding-bottom:0; max-width:100%; }
+      .eyebrow { margin-bottom:16px; } h1 { margin-bottom:16px; }
+      .promise { font-size:26px; max-width:340px; margin-bottom:16px; }
+      .hero-description { font-size:14px; line-height:1.6; margin-bottom:24px; }
+      .art { inset:auto 0 32px; height:256px; object-position:center; -webkit-mask-image:linear-gradient(to bottom,transparent,black 24%,black 80%,transparent); mask-image:linear-gradient(to bottom,transparent,black 24%,black 80%,transparent); }
+      .coordinate { display:none; } .hero-foot { bottom:16px; font-size:12px; } .hero-foot span:last-child { display:none; }
+      .strip-inner { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding-block:24px; font-size:12px; }
+      .strip span { gap:8px; }
+      .studio,.contact,.expertise,.awards { padding-block:32px; }
+      .pillars,.objectives,.expertise .services { grid-template-columns:1fr; gap:24px; }
+      .pillars { margin-bottom:32px; }
+      .expertise .service,.expertise .service + .service { padding:24px; }
+      .award-list li { grid-template-columns:1fr; gap:8px; }
+      .section-top,.contact-inner { grid-template-columns:1fr; gap:24px; } .section-top { margin-bottom:32px; }
+      .section-top p:not(.section-label) { font-size:14px; }
+      .services { grid-template-columns:1fr; }
+      .service,.service + .service { border-left:0; border-bottom:1px solid var(--border); padding:24px 0; }
+      .service:last-child { border-bottom:0; padding-bottom:0; }
+      .service h3 { margin:16px 0; } .service-tags { margin-top:16px; }
+      footer .container { padding-block:24px; gap:24px; flex-wrap:wrap; } .footer-links { flex-wrap:wrap; }
+    }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="navigation container">
+      <a class="brand" href="#"><img src="../../src/assets/tobiya-logo-trimmed.png" alt="Tobiya Studio"></a>
+      <nav class="desktop-nav" aria-label="Main navigation"><a href="#studio">The studio</a><a href="#expertise">Services</a><a href="#awards">Awards</a><a class="talk" href="#contact">Let's talk <span aria-hidden="true">&#8599;</span></a></nav>
+      <details class="mobile-menu"><summary aria-label="Navigation menu"><span></span><span></span><span></span></summary><nav aria-label="Mobile navigation"><a href="#studio">The studio</a><a href="#expertise">Services</a><a href="#awards">Awards</a><a href="#contact">Let's talk</a></nav></details>
+    </div>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="art" src="../../src/assets/hero-bg.jpg" alt="Tobiya virtual reality headset artwork">
+      <div class="hero-inner container">
+        <div class="hero-copy">
+          <p class="eyebrow">GAME DEVELOPMENT &amp; SPATIAL COMPUTING</p>
+          <h1 id="hero-title">Tobiya Studio</h1>
+          <p class="promise">We open doors<br>to new worlds.</p>
+          <p class="hero-description">Beyond the screen. Across realities.<br>We craft immersive games and spatial experiences that connect the digital and physical.</p>
+          <a class="primary" href="#expertise">Explore our worlds <span aria-hidden="true">&#8599;</span></a>
+        </div>
+        <div class="coordinate" aria-hidden="true">[ X / Y / Z ]<br>VIRTUAL MEETS PHYSICAL</div>
+        <div class="hero-foot"><span>ADDIS ABABA &middot; CREATING WORLDWIDE</span><span>DISCOVER THE STUDIO &#8595;</span></div>
+      </div>
+    </section>
+    <div class="strip"><div class="strip-inner container"><span><small>01 /</small> GAME DEVELOPMENT</span><span><small>02 /</small> VIRTUAL REALITY</span><span><small>03 /</small> AUGMENTED REALITY</span><span><small>04 /</small> SPATIAL COMPUTING</span></div></div>
+    <section class="studio container" id="studio">
+      <div class="section-top"><p class="section-label"><span>01 /</span> ABOUT US</p><div><h2>XR Innovation in Ethiopia</h2><p>Tobiya Game Studio is an innovator in game development, with a high focus on extended reality (XR) and interactive experiences. Started by a team of passionate creators and technologists, the studio aims to push the boundaries of storytelling and engagement through immersive technologies in Ethiopia.</p></div></div>
+      <div class="pillars">
+        <article class="pillar"><span class="number">01 / PURPOSE</span><h3>Our Mission</h3><p>Our mission at Tobiya Game Studio is to harness the potential of extended reality (XR) to create immersive, interactive experiences that engage, educate, and inspire. We strive to push the boundaries of storytelling through innovative game design, fostering meaningful connections between players and the digital worlds we build.</p></article>
+        <article class="pillar"><span class="number">02 / POSSIBILITY</span><h3>Our Vision</h3><p>We strongly believe in the power of immersive storytelling to inspire and educate. Our vision includes the development of interactive experiences that not only entertain but also challenge perceptions and foster exploration. Using the latest in XR technology, we strive to break down the barriers between the digital and physical worlds.</p></article>
+      </div>
+      <h2>Our Objectives</h2>
+      <div class="objectives">
+        <article class="objective"><span class="number">01 / INNOVATE</span><h3>Innovate in XR Technology</h3><p>Continuously explore and integrate the latest advancements in extended reality to enhance the quality and interactivity of our games and experiences.</p></article>
+        <article class="objective"><span class="number">02 / ENGAGE</span><h3>Create Engaging Experiences</h3><p>Develop immersive games and interactive applications that involve players in emotional contacts, fostering a sense of exploration in detailed, virtual worlds.</p></article>
+        <article class="objective"><span class="number">03 / COLLABORATE</span><h3>Nurture Collaboration</h3><p>Nurture a dynamic community of creators and players by providing platforms that will help in collaboration, feedback, and shared experiences.</p></article>
+        <article class="objective"><span class="number">04 / EDUCATE</span><h3>Promote Education</h3><p>Utilize our interactive experiences to teach and inform audiences about diverse cultures, technologies, and artistic expressions.</p></article>
+      </div>
+    </section>
+    <section class="expertise" id="expertise"><div class="container">
+      <div class="section-top"><p class="section-label"><span>02 /</span> WHAT WE DO</p><div><h2>Our Services</h2><p>At Tobiya, we design and develop a wide range of interactive experiences, including virtual reality, augmented reality, and mixed reality applications.</p></div></div>
+      <div class="services">
+        <article class="service"><span class="number">01 / PLAY</span><h3>Game Development</h3><p>We craft engaging games across multiple platforms, from mobile to console. Our team brings ideas to life with stunning visuals, compelling narratives, and addictive gameplay mechanics.</p><div class="service-tags">Cross-platform development &nbsp; / &nbsp; 2D &amp; 3D games &nbsp; / &nbsp; Mobile</div></article>
+        <article class="service"><span class="number">02 / IMMERSE</span><h3>AR/VR Application Development</h3><p>Immersive AR and VR applications that transport users to new realities. We specialize in creating experiences for training, education, entertainment, and enterprise solutions.</p><div class="service-tags">Virtual Reality &nbsp; / &nbsp; Augmented Reality &nbsp; / &nbsp; Mixed Reality</div></article>
+        <article class="service"><span class="number">03 / EXPLORE</span><h3>Prototyping &amp; Concept VR</h3><p>Rapid prototyping services to validate ideas and concepts before full development. We help visualize and test your vision in virtual space.</p><div class="service-tags">Rapid prototyping &nbsp; / &nbsp; Concept validation &nbsp; / &nbsp; Proof of concept</div></article>
+        <article class="service"><span class="number">04 / CONNECT</span><h3>Interactive Experience Design</h3><p>Creating memorable interactive installations and digital experiences for events, exhibitions, and brand activations that captivate and engage audiences.</p><div class="service-tags">Interactive installations &nbsp; / &nbsp; Event experiences &nbsp; / &nbsp; Digital activations</div></article>
+      </div>
+    </div></section>
+    <section class="awards container" id="awards">
+      <div class="section-top"><p class="section-label"><span>03 /</span> RECOGNITION</p><div><h2>Awards &amp; Achievements</h2><p>Our work has been recognized internationally, showcasing Ethiopia's potential in the global XR and gaming industry.</p></div></div>
+      <ol class="award-list">
+        <li><time datetime="2024">2024</time><div><h3>XR inclusion 2024 Cohort</h3><p>Selected for 2024 XR second cohort</p></div></li>
+        <li><time datetime="2025">2025</time><div><h3>IGDA Foundation Alumni</h3><p>Selected for IGDA F virtual exchange program</p></div></li>
+        <li><time datetime="2025">2025</time><div><h3>Fakugest award</h3><p>Rising start Award at South Africa</p></div></li>
+        <li><time datetime="2025">2025</time><div><h3>Addis Game Week Award</h3><p>Best Studio of the year at Ethiopia</p></div></li>
+      </ol>
+      <div class="achievement"><p>Featured Achievement</p><strong>First Ethiopian Games Showcased Internationally</strong></div>
+    </section>
+    <section class="contact" id="contact"><div class="contact-inner container"><p class="section-label"><span>04 /</span> START A CONVERSATION</p><div><h2>A new world starts<br>with your idea.</h2><p>Tell us what you imagine. Let's craft what comes next.</p><a class="primary" href="https://tobiyastudio.com/#contact">Let's build together <span aria-hidden="true">&#8599;</span></a></div></div></section>
+  </main>
+  <footer><div class="container"><img src="../../src/assets/tobiya-logo-trimmed.png" alt="Tobiya Studio"><span>Addis Ababa, Ethiopia / Creating worldwide</span><div class="footer-links"><a href="#studio">Studio</a><a href="#contact">Contact</a><span>&copy; 2026 Tobiya Studio</span></div></div></footer>
+  <script>
+    document.querySelectorAll('.mobile-menu a').forEach(link => {
+      link.addEventListener('click', () => { document.querySelector('.mobile-menu').open = false; });
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && document.querySelector('.mobile-menu').open) {
+        document.querySelector('.mobile-menu').open = false;
+        document.querySelector('summary').focus();
+      }
+    });
+  </script>
+</body>
+</html>

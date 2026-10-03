@@ -85,7 +85,7 @@ export default function BlogPostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
@@ -93,7 +93,7 @@ export default function BlogPostPage() {
 
   if (notFound || !post) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center">
           <h1 className="text-4xl font-bold mb-4">Post Not Found</h1>
@@ -113,7 +113,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navbar />
       
       <article className="pt-24 pb-16">

@@ -11,7 +11,11 @@ try {
     if ($command === 'schema') {
         if (execute($db, 'SHOW TABLES')->fetch()) throw new RuntimeException('Schema installation requires an empty database.');
         $db->exec(file_get_contents(__DIR__ . '/schema.sql'));
+        seedProjectCategories($db);
         echo "Schema installed.\n";
+    } elseif ($command === 'migrate') {
+        migrateSchema($db);
+        echo "Database is up to date.\n";
     } elseif ($command === 'import') {
         $counts = importExport($db, $argv[2] ?? throw new RuntimeException('Export directory required.'));
         echo json_encode($counts, JSON_PRETTY_PRINT) . "\n";
@@ -53,7 +57,7 @@ try {
         }
         echo "Initial super admin created.\n";
         if ($token !== null) echo "Setup link saved privately; expires in one hour. Delete the file after use.\n";
-    } else throw new RuntimeException('Commands: schema | import PRIVATE_EXPORT_DIRECTORY | bootstrap ADMIN_EMAIL | bootstrap-link ADMIN_EMAIL PRIVATE_OUTPUT_FILE');
+    } else throw new RuntimeException('Commands: schema | migrate | import PRIVATE_EXPORT_DIRECTORY | bootstrap ADMIN_EMAIL | bootstrap-link ADMIN_EMAIL PRIVATE_OUTPUT_FILE');
 } catch (Throwable $error) {
     fwrite(STDERR, 'Operation failed: ' . ($error instanceof PDOException ? 'Database error; inspect private server logs.' : $error->getMessage()) . "\n");
     exit(1);

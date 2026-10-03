@@ -29,7 +29,7 @@ function uploadMedia(PDO $db, array $config, ?array $user): array
 {
     if (!$user) throw new ApiFailure('Please sign in.', 401);
     $permitted = false;
-    foreach (['projects', 'team', 'awards', 'blog', 'settings'] as $permission) $permitted = $permitted || can($user, $permission);
+    foreach (['projects', 'products', 'team', 'awards', 'blog', 'settings'] as $permission) $permitted = $permitted || can($user, $permission);
     if (!$permitted) throw new ApiFailure('Permission denied.', 403);
     rateLimit($db, 'upload', $user['id'], 100, 3600);
     if (($_POST['bucket'] ?? '') !== 'project-images') throw new ApiFailure('Invalid media bucket.');

@@ -197,9 +197,14 @@ export type Database = {
         }
         Relationships: []
       }
-      projects: {
-        Row: {
-          category: Database["public"]["Enums"]["project_category"]
+      project_categories: {
+        Row: { created_at: string; display_order: number | null; id: string; name: string; slug: string; updated_at: string }
+        Insert: { created_at?: string; display_order?: number | null; id?: string; name: string; slug: string; updated_at?: string }
+        Update: { created_at?: string; display_order?: number | null; id?: string; name?: string; slug?: string; updated_at?: string }
+        Relationships: []
+      }
+      projects: {        Row: {
+          category: string
           cover_image_url: string | null
           created_at: string
           display_order: number | null
@@ -214,9 +219,10 @@ export type Database = {
           tools_used: string[] | null
           updated_at: string
           video_url: string | null
+          video_urls: string[] | null
         }
         Insert: {
-          category?: Database["public"]["Enums"]["project_category"]
+          category?: string
           cover_image_url?: string | null
           created_at?: string
           display_order?: number | null
@@ -231,9 +237,10 @@ export type Database = {
           tools_used?: string[] | null
           updated_at?: string
           video_url?: string | null
+          video_urls?: string[] | null
         }
         Update: {
-          category?: Database["public"]["Enums"]["project_category"]
+          category?: string
           cover_image_url?: string | null
           created_at?: string
           display_order?: number | null
@@ -248,6 +255,64 @@ export type Database = {
           tools_used?: string[] | null
           updated_at?: string
           video_url?: string | null
+          video_urls?: string[] | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          featured: boolean | null
+          gallery_images: string[] | null
+          id: string
+          platforms: string[] | null
+          published_at: string | null
+          slug: string
+          status: Database["public"]["Enums"]["product_status"]
+          store_links: { platform: string; url: string }[] | null
+          tagline: string | null
+          title: string
+          trailer_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          featured?: boolean | null
+          gallery_images?: string[] | null
+          id?: string
+          platforms?: string[] | null
+          published_at?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["product_status"]
+          store_links?: { platform: string; url: string }[] | null
+          tagline?: string | null
+          title: string
+          trailer_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          featured?: boolean | null
+          gallery_images?: string[] | null
+          id?: string
+          platforms?: string[] | null
+          published_at?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["product_status"]
+          store_links?: { platform: string; url: string }[] | null
+          tagline?: string | null
+          title?: string
+          trailer_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -376,6 +441,8 @@ export type Database = {
         | "analytics"
         | "users"
         | "services"
+        | "products"
+      product_status: "draft" | "published"
       project_category: "vr" | "ar" | "interactive" | "award"
     }
     CompositeTypes: {
@@ -514,7 +581,9 @@ export const Constants = {
         "analytics",
         "users",
         "services",
+        "products",
       ],
+      product_status: ["draft", "published"],
       project_category: ["vr", "ar", "interactive", "award"],
     },
   },

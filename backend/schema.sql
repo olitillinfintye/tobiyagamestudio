@@ -22,9 +22,21 @@ CREATE TABLE IF NOT EXISTS admin_permissions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS projects (
     id CHAR(36) PRIMARY KEY, title VARCHAR(500) NOT NULL, slug VARCHAR(500) NOT NULL UNIQUE,
-    category ENUM('vr','ar','interactive','award') NOT NULL DEFAULT 'interactive',
+    category VARCHAR(100) NOT NULL DEFAULT 'interactive',
     short_description TEXT, full_description MEDIUMTEXT, cover_image_url TEXT,
-    gallery_images JSON, tools_used JSON, video_url TEXT, project_link TEXT,
+    gallery_images JSON, tools_used JSON, video_url TEXT, video_urls JSON, project_link TEXT,
+    featured BOOLEAN DEFAULT FALSE, display_order INT DEFAULT 0,
+    created_at VARCHAR(32) NOT NULL, updated_at VARCHAR(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS project_categories (
+    id CHAR(36) PRIMARY KEY, name VARCHAR(500) NOT NULL, slug VARCHAR(100) NOT NULL UNIQUE,
+    display_order INT DEFAULT 0, created_at VARCHAR(32) NOT NULL, updated_at VARCHAR(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS products (
+    id CHAR(36) PRIMARY KEY, title VARCHAR(500) NOT NULL, slug VARCHAR(500) NOT NULL UNIQUE,
+    tagline VARCHAR(500), description MEDIUMTEXT, cover_image_url TEXT,
+    gallery_images JSON, platforms JSON, store_links JSON, trailer_url TEXT,
+    status ENUM('draft','published') NOT NULL DEFAULT 'draft', published_at VARCHAR(32),
     featured BOOLEAN DEFAULT FALSE, display_order INT DEFAULT 0,
     created_at VARCHAR(32) NOT NULL, updated_at VARCHAR(32) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

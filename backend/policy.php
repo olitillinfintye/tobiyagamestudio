@@ -14,7 +14,9 @@ function tables(): array
     $base = ['id' => 'id', 'created_at' => 'date'];
     $updated = $base + ['updated_at' => 'date'];
     return [
-        'projects' => $updated + ['title' => 'short', 'slug' => 'slug', 'category' => 'category', 'short_description' => 'text', 'full_description' => 'html', 'cover_image_url' => 'url', 'gallery_images' => 'urls', 'tools_used' => 'strings', 'video_url' => 'url', 'project_link' => 'url', 'featured' => 'bool', 'display_order' => 'int'],
+        'projects' => $updated + ['title' => 'short', 'slug' => 'slug', 'category' => 'slug', 'short_description' => 'text', 'full_description' => 'html', 'cover_image_url' => 'url', 'gallery_images' => 'urls', 'tools_used' => 'strings', 'video_url' => 'url', 'video_urls' => 'urls', 'project_link' => 'url', 'featured' => 'bool', 'display_order' => 'int'],
+        'project_categories' => $updated + ['name' => 'short', 'slug' => 'slug', 'display_order' => 'int'],
+        'products' => $updated + ['title' => 'short', 'slug' => 'slug', 'tagline' => 'short', 'description' => 'html', 'cover_image_url' => 'url', 'gallery_images' => 'urls', 'platforms' => 'strings', 'store_links' => 'social', 'trailer_url' => 'url', 'status' => 'status', 'published_at' => 'date', 'featured' => 'bool', 'display_order' => 'int'],
         'team_members' => $base + ['name' => 'short', 'role' => 'short', 'bio' => 'text', 'photo_url' => 'url', 'linkedin_url' => 'url', 'twitter_url' => 'url', 'social_links' => 'social', 'display_order' => 'int'],
         'awards' => $base + ['title' => 'short', 'description' => 'text', 'image_url' => 'url', 'year' => 'int', 'display_order' => 'int'],
         'blog_posts' => $updated + ['title' => 'short', 'slug' => 'slug', 'content' => 'html', 'excerpt' => 'text', 'cover_image_url' => 'url', 'author_name' => 'short', 'category' => 'short', 'published' => 'bool', 'published_at' => 'date'],
@@ -29,12 +31,18 @@ function tables(): array
 
 function permissions(): array
 {
-    return ['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics', 'users', 'services'];
+    return ['messages', 'blog', 'projects', 'team', 'awards', 'settings', 'analytics',     'users', 'services', 'products'];
 }
 
 function publicSettings(): array
 {
-    return ['hero_projects', 'hero_team_members', 'hero_awards', 'hero_years', 'hero_3d_model', 'showreel_video_url', 'social_links', 'contact_email', 'contact_phone', 'contact_location', 'contact_website'];
+    return ['hero_projects', 'hero_team_members', 'hero_awards', 'hero_years', 'hero_3d_model', 'showreel_video_url', 'social_links', 'contact_email', 'contact_phone', 'contact_location', 'contact_website', 'hidden_sections'];
+}
+
+/** Home-page sections an admin can hide. */
+function hideableSections(): array
+{
+    return ['about', 'objectives', 'partners', 'services', 'works', 'products', 'team', 'awards', 'blog', 'contact'];
 }
 
 function can(?array $user, string $permission): bool
@@ -44,7 +52,7 @@ function can(?array $user, string $permission): bool
 
 function tablePermission(string $table): string
 {
-    return ['projects' => 'projects', 'team_members' => 'team', 'awards' => 'awards', 'blog_posts' => 'blog', 'services' => 'services', 'partners' => 'settings', 'site_settings' => 'settings', 'contact_submissions' => 'messages', 'admin_users' => 'users', 'admin_permissions' => 'users'][$table] ?? throw new ApiFailure('Unknown resource.');
+    return ['projects' => 'projects', 'project_categories' => 'projects', 'products' => 'products', 'team_members' => 'team', 'awards' => 'awards', 'blog_posts' => 'blog', 'services' => 'services', 'partners' => 'settings', 'site_settings' => 'settings', 'contact_submissions' => 'messages', 'admin_users' => 'users', 'admin_permissions' => 'users'][$table] ?? throw new ApiFailure('Unknown resource.');
 }
 
 function validateValue(string $type, mixed $value): mixed
@@ -80,7 +88,7 @@ function validateValue(string $type, mixed $value): mixed
         'id' => preg_match('/^[a-f0-9-]{36}$/Di', $value),
         'slug' => preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $value),
         'key' => in_array($value, [...publicSettings(), 'notification_recipients'], true),
-        'category' => in_array($value, ['vr', 'ar', 'interactive', 'award'], true),
+        'status' => in_array($value, ['draft', 'published'], true),
         'permission' => in_array($value, permissions(), true),
         'date' => $value === '' || strtotime($value) !== false,
         default => true,
@@ -111,6 +119,7 @@ function readPolicy(string $table, ?array $user): array
     }
     if ($table === 'contact_submissions' && !can($user, 'messages')) throw new ApiFailure('Permission denied.', $user ? 403 : 401);
     if ($table === 'blog_posts' && !can($user, 'blog')) return [['column' => 'published', 'operator' => 'eq', 'value' => true]];
+    if ($table === 'products' && !can($user, 'products')) return [['column' => 'status', 'operator' => 'eq', 'value' => 'published']];
     if ($table === 'partners' && !can($user, 'settings')) return [['column' => 'is_active', 'operator' => 'eq', 'value' => true]];
     if ($table === 'site_settings' && !can($user, 'settings')) return [['column' => 'key', 'operator' => 'in', 'value' => publicSettings()]];
     return [];
