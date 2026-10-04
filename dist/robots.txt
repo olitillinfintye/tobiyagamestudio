@@ -1,0 +1,148 @@
+# Robots.txt for Tobiya Game Studio
+# Top Virtual Reality Company - VR, AR & Game Development
+# Headquarters: Creative Hub, Piyasa, Addis Ababa, Ethiopia
+# Serving clients worldwide
+# https://tobiyagamestudio.lovable.app
+
+# Google Crawlers - Priority
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-News
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
+User-agent: Storebot-Google
+Allow: /
+
+# Bing Crawlers
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: msnbot
+Allow: /
+
+User-agent: BingPreview
+Allow: /
+
+# Yahoo
+User-agent: Slurp
+Allow: /
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Chinese Search Engines
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Sogou
+Allow: /
+
+User-agent: 360Spider
+Allow: /
+
+# Russian Search Engines  
+User-agent: YandexBot
+Allow: /
+
+User-agent: YandexImages
+Allow: /
+
+# Japanese Search
+User-agent: Y!J
+Allow: /
+
+# Korean Search
+User-agent: Yeti
+Allow: /
+
+# European Search
+User-agent: Qwantify
+Allow: /
+
+# Social Media Crawlers - Important for Sharing
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: redditbot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+# SEO Tools - Allow for analysis
+User-agent: AhrefsBot
+Allow: /
+
+User-agent: SemrushBot
+Allow: /
+
+User-agent: MJ12bot
+Allow: /
+
+User-agent: DotBot
+Allow: /
+
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Allow all other bots
+User-agent: *
+Allow: /
+Crawl-delay: 1
+
+# Disallow admin and private areas
+Disallow: /admin
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /private/
+
+# Sitemap location
+Sitemap: https://tobiyagamestudio.lovable.app/sitemap.xml
+
+# Host
+Host: https://tobiyagamestudio.lovable.app
